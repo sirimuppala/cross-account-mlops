@@ -59,6 +59,7 @@ Resources:
                     - ""
                     - - !GetAtt S3DataBucket.Arn
                       - "/"
+                      - "*"
               - Effect: Allow
                 Action: sagemaker:*
                 Resource: "*"

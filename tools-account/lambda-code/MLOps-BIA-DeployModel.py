@@ -5,19 +5,22 @@ import tempfile
 import boto3
 from boto3.session import Session
 
-sagemaker = boto3.client('sagemaker')
+from time import gmtime, strftime
+
 code_pipeline = boto3.client('codepipeline')
 
 
 def lambda_handler(event, context):
     try:
-        jobName = "datascience-project1"
+        ##Add timestamp to the jobname to make the endpoint unique.
+        jobName = "datascience-project-" + strftime("%Y-%m-%d-%H-%M-%S", gmtime())
 
-        # Event is  {'CodePipeline.job': {'id': 'b40ddb4a-8559-4551-bd8d-781f73fcfc2c', 'accountId': '480774895708', 'data': {'actionConfiguration': {'configuration': {'FunctionName': 'MLOps-BIA-DeployModel-smm', 'UserParameters': '{ "InitialInstanceCount": 1, "InitialVariantWeight": 1, "InstanceType": "ml.t2.medium", "EndpointConfigName": "Dev" }'}}, 'inputArtifacts': [{'name': 'SourceArtifact', 'revision': 'HkIrDxS6RdLArKDCEt4HEktdvfdGNLKE', 'location': {'type': 'S3', 's3Location': {'bucketName': 'mlops-bia-codepipeline-artifacts-smm-7c3f4020', 'objectKey': 'ToolsPipeline-CodePi/SourceArti/w6CXMvR.tar.gz'}}}], 'outputArtifacts': [{'name': 'HostingInfo', 'revision': None, 'location': {'type': 'S3', 's3Location': {'bucketName': 'mlops-bia-codepipeline-artifacts-smm-7c3f4020', 'objectKey': 'ToolsPipeline-CodePi/HostingInf/6IOT3Cs'}}}], 'artifactCredentials': {'accessKeyId': 'ASIAW74DKXBOBJCHVX35', 'secretAccessKey': 'tTv1MTrnUSWPyaetxnD7BELKsfJp0Rgnx2Ee2Zbt', 'sessionToken': 'IQoJb3JpZ2luX2VjEDEaCXVzLXdlc3QtMiJIMEYCIQD0cMENm7UNags1MZFnXt3ghWjVXQFiCcI491tMhbf1nQIhAOZ0P8Sb0/zJNX5da69RO/YpPzStL1Q6A2ALopKmzNj6KooFCPr//////////wEQABoMNDgwNzc0ODk1NzA4IgzSr378JLPMr9eJipcq3gTpsjv6wSbjelSRqz0dR00ovWlxy7WMhuJ7B2vl++mB1t6zIiz9JjEHil2jK8hE32xYGWe0E/Gfln8QdjJZ1xHsffRgDnRuoxs0BrTTu0/mmWxA4YLnI3Eam7dmQzUY1m5WxGY7tbBWmGBA16/k2Ezic+/HMyVVSOnqRaRaqPTpBaTbU9ir3ceCboqq/B8dI24W/bu+eqPaNZoC/MaRKrVNriAeJcVaSZl3qqt4tZDm7Uo4lSzEWUPPIu6dPh7xggAalMxZ1JfbP2VeVC9XR65Zj2S3zmH85LtMzl+Cf0YT1tuJhqkiKGTsRHDnTybnZCcCar0zw0Tkor/tLpueJrfVq8urzQ0P3Hhi+kQrwEoXRxc57SPjQNzajBHQJIpuelGQGNEdjf54npktuJjhnODz3v1+lO2xBzZ98Tr5JivPg16NHml7P8Xlnw1EjsORXJjhQd4DTaKgz4ijSHkg0fLARsOwGgzgx/laJiNkDq3p/ZIDJNs7+xf1inp8JZMIOq7HAk5e8f+Loj5iTt4oDADrkiwkoLhVCaV/FVZjfjr6GmlNIvMcTICo8RJXYRtRHPTAQlyoH6EWL/GtPSYAb5qGx/OyFd4DXcGELm/v8vMphjUrtdTBVZok/MocZx6e6oi3Lf4JgdJ84Dqx5trPpOxilvAK3kqo9eJHjh6aqcAJ/VGkhab5+652kR1B67EK2dttCxNFUMUC5WnSQs0fxpV0UJv97KG+cDsibH5tmlJgYvfAMeyXwc0qVftFu4XTe5gJq6oIHokh400Wp7yhGo1Rq9qDCp67eWCr7QQso2Uw14fs8gU6hALtUg32sIx4NFeoJDx5ZrrqNDFbtOnDA+DCyhT+kVYV3/YM9Hu08S/pB8UxaYtc0p9sLbpzhe8/bg1JzefW4FYvHnWCSfP025+fIl9vfreQvc4aPzGSUN9A8n67wwobzNWVOSQ/hjdAUkGZU827w4w6HCD1+YgTTTiKJAZ5TBhY+C883edul+JhcUfSELRDHIlZZINS+4WMfUJRlad8gSGY2ndKc6vjjLxjp1L1ffHppm/Umt4Nol7DcXTR3OtmRlV3q/F6s0d63mHaQJs1uk/R0ANkAPSvddn7c1OH3JbTMoTQQsCehESDOR/wOTJqVMSp827yDY72XgePIxBUtY34H4NZxg==', 'expirationTime': 1583023963000}}}}
+        ##Get the region name
+        session = boto3.session.Session()
+        region = session.region_name
 
-        # This is the model.tar.gz
+        ##Get the model to be deployed
         objectKey = event['CodePipeline.job']['data']['inputArtifacts'][0]['location']['s3Location']['objectKey']
-
         print("[INFO]Object:", objectKey)
 
         bucketname = event['CodePipeline.job']['data']['inputArtifacts'][0]['location']['s3Location']['bucketName']
@@ -31,57 +34,128 @@ def lambda_handler(event, context):
         event['status'] = 'Creating'
 
         endpoint_environment = config_param["EndpointConfigName"]
+        # endpoint_environment="Tools"
+        # endpoint_environment = "Stage"
         print("[INFO]Endpoint environment:", endpoint_environment)
         initial_variant_weight = config_param['InitialVariantWeight']
         print('[INFO]INITIAL_VARIANT_WEIGHT:', initial_variant_weight)
 
-        # trainingImage = "246618743249.dkr.ecr.us-west-2.amazonaws.com/xgboost:1"
+        ##TODO : This should come from parameters
         trainingImage = "433757028032.dkr.ecr.us-west-2.amazonaws.com/xgboost:1"
 
-        # endpoint_environment can be changed based on specific environment setup
-        # valid values are 'Dev','Test','Prod'
-        # value input below should be representative to the first target environment in your pipeline (typically Dev or Test)
+        modelArtifact = 'https://{}.s3-{}.amazonaws.com/{}'.format(bucketname, region, objectKey)
+        print("Model artifact is ", modelArtifact)
 
-        # modelArtifact = 'https://s3.mlops-bia-codepipeline-artifacts-smm-7c3f4020.amazonaws.com/ToolsPipeline-CodePi/SourceArti/0A24plI.tar.gz'
+        # endpoint_environment determines to which environment the model should be deployed.
+        # valid values are 'Tools','Stage
 
-        # modelArtifact = 'https://{}.s3-{}.amazonaws.com/{}/{}'.format(bucket, region, prefix,MOVIE_RECOMMENDATION_MODEL)
+        if endpoint_environment == 'Tools':
+            print("Will deploy to tools account")
+            sagemaker = boto3.client('sagemaker')
 
-        # modelArtifact = 'https://mlops-bia-codepipeline-artifacts-smm-7c3f4020.amazonaws.s3-us-west-2.amazonaws.com/ToolsPipeline-CodePi/SourceArti/0A24plI.tar.gz'
+            print(
+                "[INFO]Environment Input is Tools so creating model, endpoint_config and endpoint in the tools account")
 
-        ##TODO : Should not be hardcoded.
-        modelArtifact = 'https://mlops-bia-data-smm-7c3f4020.s3-us-west-2.amazonaws.com/models/model.tar.gz'
+            # Role to pass to SageMaker training job that has access to training data in S3, etc
+            sagemakerRole = os.environ['SageMakerExecutionRole']
 
-        if endpoint_environment == 'Dev':
-            print("[INFO]Environment Input is Dev so Creating model resource from training artifact")
-            create_model(jobName, trainingImage, modelArtifact)
+            create_model(sagemaker, sagemakerRole, jobName, trainingImage, modelArtifact)
+            endpoint_config_name = jobName + '-' + endpoint_environment
+            print("[INFO]EndpointConfigName:", endpoint_config_name)
+            event['message'] = 'Creating Endpoint Hosting {} started.'.format(endpoint_config_name)
+
+            create_endpoint_config(sagemaker, jobName, endpoint_config_name, config_param, initial_variant_weight)
+
+            create_endpoint(sagemaker, endpoint_config_name)
+
+            event['models'] = 'ModelName:"'.format(jobName)
+            event['status'] = 'InService'
+            event['endpoint'] = endpoint_config_name
+            event['endpoint_config'] = endpoint_config_name
+            event['job_name'] = jobName
+
+            write_job_info_s3(event)
+            put_job_success(event)
+
+        elif endpoint_environment == 'Stage':
+            print("Will deploy to stage account")
+            # This will be a cross account model deployment.
+            # First download the model artifact and transfer it to stage account.
+
+            ##Download to local.
+            s3 = boto3.client('s3')
+            downloaded_model_artifact = "/tmp/model.tar.gz"
+            s3.download_file(bucketname, objectKey, downloaded_model_artifact)
+            print("Downloaded model to local.")
+
+            ##Use the IAM role that is created in stage account, which gives access Stage accounts
+            ##resources to Tools account.
+            # This should have been created in the stage account
+            ##TODO PARAM
+            tools_account_access_arn = 'arn:aws:iam::756752983459:role/AllowAccessToToolsAccountRole-sam-ab5c9af0'
+
+            sts_connection = boto3.client('sts')
+            acct_b = sts_connection.assume_role(
+                RoleArn=tools_account_access_arn,
+                RoleSessionName="cross_acct_lambda"
+            )
+
+            ACCESS_KEY = acct_b['Credentials']['AccessKeyId']
+            SECRET_KEY = acct_b['Credentials']['SecretAccessKey']
+            SESSION_TOKEN = acct_b['Credentials']['SessionToken']
+
+            # create service client using the assumed role credentials, e.g. S3
+            s3 = boto3.client(
+                's3',
+                aws_access_key_id=ACCESS_KEY,
+                aws_secret_access_key=SECRET_KEY,
+                aws_session_token=SESSION_TOKEN,
+            )
+
+            print("stage_s3_client", s3)
+
+            ##Copy model artifact to the Stage S3 bucket
+            stage_bucket = 'mlops-bia-data-sam-ab5c9af0'  ##TODO PARAM
+            stage_objectKey = objectKey
+            with open(downloaded_model_artifact, "rb") as f:
+                s3.upload_fileobj(f, stage_bucket, stage_objectKey)
+
+            # sagemaker = boto3.client('sagemaker')
+            sagemaker = boto3.client(
+                'sagemaker',
+                aws_access_key_id=ACCESS_KEY,
+                aws_secret_access_key=SECRET_KEY,
+                aws_session_token=SESSION_TOKEN,
+            )
+
+            print("stage_sagemaker_client", sagemaker)
+            modelArtifact = 'https://{}.s3-{}.amazonaws.com/{}'.format(stage_bucket, region, stage_objectKey)
+
+            print("modelArtifact in Stage account ", modelArtifact)
+
+            # Role to pass to SageMaker training job that has access to training data in S3, etc
+            ##TODO : Need to be passed in as parameters.
+            sagemakerRole = os.environ['SageMakerExecutionRoleStage']
+            # SageMakerRole = 'arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0'  ##TODO:PARAM
+
+            create_model(sagemaker, sagemakerRole, jobName, trainingImage, modelArtifact)
+            endpoint_config_name = jobName + '-' + endpoint_environment
+
+            create_endpoint_config(sagemaker, jobName, endpoint_config_name, config_param, initial_variant_weight)
+
+            create_endpoint(sagemaker, endpoint_config_name)
+
+            event['models'] = 'ModelName:"'.format(jobName)
+            event['status'] = 'InService'
+            event['endpoint'] = endpoint_config_name
+            event['endpoint_config'] = endpoint_config_name
+            event['job_name'] = jobName
+
+            write_job_info_s3(event)
+            put_job_success(event)
+
         else:
-            print("[INFO]Environment Input is not equal to Dev meaning model already exists - no need to recreate")
-
-        endpoint_config_name = jobName + '-' + endpoint_environment
-        print("[INFO]EndpointConfigName:", endpoint_config_name)
-
-        event['message'] = 'Creating Endpoint Hosting"{} started."'.format(endpoint_config_name)
-
-        create_endpoint_config(jobName, endpoint_config_name, config_param, initial_variant_weight)
-
-        # TO DO
-        # if initial_variant_weight == 1:
-        # CleanUp old endpoint to avoid additional charges
-        #    clean_up_oldendpoints(endpoint_environment)
-        # else:
-        #    print("[INFO] Initial variant is not 1")
-
-        create_endpoint(endpoint_config_name)
-
-        event['models'] = 'ModelName:"'.format(jobName)
-        event['status'] = 'InService'
-        event['endpoint'] = endpoint_config_name
-        event['endpoint_config'] = endpoint_config_name
-        event['job_name'] = jobName
-
-        write_job_info_s3(event)
-        put_job_success(event)
-
+            print("[INFO]Environment Input is not equal to Tools or Stage, nothing to do.")
     except Exception as e:
         print(e)
         print('Unable to create deployment job.')
@@ -93,82 +167,7 @@ def lambda_handler(event, context):
     return event
 
 
-def lambda_handler_old(event, context):
-    try:
-        # Read in information from previous get_status job
-        previousStepEvent = read_job_info(event)
-
-        # print("[INFO]previousStepEvent:", previousStepEvent)
-
-        # print("Event is ", event)
-
-        # Event is  {'CodePipeline.job': {'id': 'b40ddb4a-8559-4551-bd8d-781f73fcfc2c', 'accountId': '480774895708', 'data': {'actionConfiguration': {'configuration': {'FunctionName': 'MLOps-BIA-DeployModel-smm', 'UserParameters': '{ "InitialInstanceCount": 1, "InitialVariantWeight": 1, "InstanceType": "ml.t2.medium", "EndpointConfigName": "Dev" }'}}, 'inputArtifacts': [{'name': 'SourceArtifact', 'revision': 'HkIrDxS6RdLArKDCEt4HEktdvfdGNLKE', 'location': {'type': 'S3', 's3Location': {'bucketName': 'mlops-bia-codepipeline-artifacts-smm-7c3f4020', 'objectKey': 'ToolsPipeline-CodePi/SourceArti/w6CXMvR.tar.gz'}}}], 'outputArtifacts': [{'name': 'HostingInfo', 'revision': None, 'location': {'type': 'S3', 's3Location': {'bucketName': 'mlops-bia-codepipeline-artifacts-smm-7c3f4020', 'objectKey': 'ToolsPipeline-CodePi/HostingInf/6IOT3Cs'}}}], 'artifactCredentials': {'accessKeyId': 'ASIAW74DKXBOBJCHVX35', 'secretAccessKey': 'tTv1MTrnUSWPyaetxnD7BELKsfJp0Rgnx2Ee2Zbt', 'sessionToken': 'IQoJb3JpZ2luX2VjEDEaCXVzLXdlc3QtMiJIMEYCIQD0cMENm7UNags1MZFnXt3ghWjVXQFiCcI491tMhbf1nQIhAOZ0P8Sb0/zJNX5da69RO/YpPzStL1Q6A2ALopKmzNj6KooFCPr//////////wEQABoMNDgwNzc0ODk1NzA4IgzSr378JLPMr9eJipcq3gTpsjv6wSbjelSRqz0dR00ovWlxy7WMhuJ7B2vl++mB1t6zIiz9JjEHil2jK8hE32xYGWe0E/Gfln8QdjJZ1xHsffRgDnRuoxs0BrTTu0/mmWxA4YLnI3Eam7dmQzUY1m5WxGY7tbBWmGBA16/k2Ezic+/HMyVVSOnqRaRaqPTpBaTbU9ir3ceCboqq/B8dI24W/bu+eqPaNZoC/MaRKrVNriAeJcVaSZl3qqt4tZDm7Uo4lSzEWUPPIu6dPh7xggAalMxZ1JfbP2VeVC9XR65Zj2S3zmH85LtMzl+Cf0YT1tuJhqkiKGTsRHDnTybnZCcCar0zw0Tkor/tLpueJrfVq8urzQ0P3Hhi+kQrwEoXRxc57SPjQNzajBHQJIpuelGQGNEdjf54npktuJjhnODz3v1+lO2xBzZ98Tr5JivPg16NHml7P8Xlnw1EjsORXJjhQd4DTaKgz4ijSHkg0fLARsOwGgzgx/laJiNkDq3p/ZIDJNs7+xf1inp8JZMIOq7HAk5e8f+Loj5iTt4oDADrkiwkoLhVCaV/FVZjfjr6GmlNIvMcTICo8RJXYRtRHPTAQlyoH6EWL/GtPSYAb5qGx/OyFd4DXcGELm/v8vMphjUrtdTBVZok/MocZx6e6oi3Lf4JgdJ84Dqx5trPpOxilvAK3kqo9eJHjh6aqcAJ/VGkhab5+652kR1B67EK2dttCxNFUMUC5WnSQs0fxpV0UJv97KG+cDsibH5tmlJgYvfAMeyXwc0qVftFu4XTe5gJq6oIHokh400Wp7yhGo1Rq9qDCp67eWCr7QQso2Uw14fs8gU6hALtUg32sIx4NFeoJDx5ZrrqNDFbtOnDA+DCyhT+kVYV3/YM9Hu08S/pB8UxaYtc0p9sLbpzhe8/bg1JzefW4FYvHnWCSfP025+fIl9vfreQvc4aPzGSUN9A8n67wwobzNWVOSQ/hjdAUkGZU827w4w6HCD1+YgTTTiKJAZ5TBhY+C883edul+JhcUfSELRDHIlZZINS+4WMfUJRlad8gSGY2ndKc6vjjLxjp1L1ffHppm/Umt4Nol7DcXTR3OtmRlV3q/F6s0d63mHaQJs1uk/R0ANkAPSvddn7c1OH3JbTMoTQQsCehESDOR/wOTJqVMSp827yDY72XgePIxBUtY34H4NZxg==', 'expirationTime': 1583023963000}}}}
-
-        jobName = previousStepEvent['TrainingJobName']
-        jobArn = previousStepEvent['TrainingJobArn']
-        print("[INFO]TrainingJobName:", jobName)
-        print("[INFO]TrainingJobArn:", jobArn)
-        modelArtifact = previousStepEvent['ModelArtifacts']['S3ModelArtifacts']
-        print("[INFO]Model Artifacts:", modelArtifact)
-        trainingImage = previousStepEvent['AlgorithmSpecification']['TrainingImage']
-        print("[INFO]TrainingImage:", trainingImage)
-
-        print("[INFO]Creating new endpoint configuration")
-        configText = event['CodePipeline.job']['data']['actionConfiguration']['configuration']['UserParameters']
-        config_param = json.loads(configText)
-
-        event['stage'] = 'Deployment'
-        event['status'] = 'Creating'
-
-        endpoint_environment = config_param["EndpointConfigName"]
-        print("[INFO]Endpoint environment:", endpoint_environment)
-        initial_variant_weight = config_param['InitialVariantWeight']
-        print('[INFO]INITIAL_VARIANT_WEIGHT:', initial_variant_weight)
-
-        # endpoint_environment can be changed based on specific environment setup
-        # valid values are 'Dev','Test','Prod'
-        # value input below should be representative to the first target environment in your pipeline (typically Dev or Test)
-        if endpoint_environment == 'Dev':
-            print("[INFO]Environment Input is Dev so Creating model resource from training artifact")
-            create_model(jobName, trainingImage, modelArtifact)
-        else:
-            print("[INFO]Environment Input is not equal to Dev meaning model already exists - no need to recreate")
-
-        endpoint_config_name = jobName + '-' + endpoint_environment
-        print("[INFO]EndpointConfigName:", endpoint_config_name)
-
-        event['message'] = 'Creating Endpoint Hosting"{} started."'.format(endpoint_config_name)
-
-        create_endpoint_config(jobName, endpoint_config_name, config_param, initial_variant_weight)
-
-        # TO DO
-        # if initial_variant_weight == 1:
-        # CleanUp old endpoint to avoid additional charges
-        #    clean_up_oldendpoints(endpoint_environment)
-        # else:
-        #    print("[INFO] Initial variant is not 1")
-
-        create_endpoint(endpoint_config_name)
-
-        event['models'] = 'ModelName:"'.format(jobName)
-        event['status'] = 'InService'
-        event['endpoint'] = endpoint_config_name
-        event['endpoint_config'] = endpoint_config_name
-        event['job_name'] = jobName
-
-        write_job_info_s3(event)
-        put_job_success(event)
-
-    except Exception as e:
-        print(e)
-        print('Unable to create deployment job.')
-        event['message'] = str(e)
-        put_job_failure(event)
-
-    return event
-
-
-def create_model(jobName, trainingImage, modelArtifact):
+def create_model(sagemaker, sagemakerRole, jobName, trainingImage, modelArtifact):
     """ Create SageMaker model.
     Args:
         jobName (string): Name to label model with
@@ -177,8 +176,6 @@ def create_model(jobName, trainingImage, modelArtifact):
     Returns:
         (None)
     """
-    # Role to pass to SageMaker training job that has access to training data in S3, etc
-    SageMakerRole = os.environ['SageMakerExecutionRole']
 
     try:
         response = sagemaker.create_model(
@@ -187,7 +184,7 @@ def create_model(jobName, trainingImage, modelArtifact):
                 'Image': trainingImage,
                 'ModelDataUrl': modelArtifact
             },
-            ExecutionRoleArn=SageMakerRole
+            ExecutionRoleArn=sagemakerRole
         )
     except Exception as e:
         print(e)
@@ -195,7 +192,7 @@ def create_model(jobName, trainingImage, modelArtifact):
         raise (e)
 
 
-def create_endpoint_config(jobName, endpoint_config_name, config_param, initial_variant_weight):
+def create_endpoint_config(sagemaker, jobName, endpoint_config_name, config_param, initial_variant_weight):
     """ Create SageMaker endpoint configuration.
     Args:
         jobName (string): Name to label endpoint configuration with. For easy identification of model deployed behind endpoint the endpoint name will match the trainingjob
@@ -231,7 +228,7 @@ def create_endpoint_config(jobName, endpoint_config_name, config_param, initial_
         raise (e)
 
 
-def create_endpoint(endpoint_config_name):
+def create_endpoint(sagemaker, endpoint_config_name):
     print("[INFO]Creating Endpoint")
     """ Create SageMaker endpoint with input endpoint configuration.
     Args:
@@ -252,25 +249,6 @@ def create_endpoint(endpoint_config_name):
     except Exception as e:
         print(e)
         print("[ERROR]create_endpoint:", response)
-        raise (e)
-
-
-def update_endpoint(endpoint_name, config_name):
-    """ Update SageMaker endpoint to input endpoint configuration.
-    Args:
-        endpoint_name (string): Name of endpoint to update.
-        config_name (string): Name of endpoint configuration to update endpoint with.
-    Returns:
-        (None)
-    """
-    try:
-        sagemaker.update_endpoint(
-            EndpointName=endpoint_name,
-            EndpointConfigName=config_name
-        )
-    except Exception as e:
-        print(e)
-        print("[ERROR]update_endpoint:", e)
         raise (e)
 
 

@@ -102,7 +102,7 @@ Resources:
                     - ""
                     - - "MLOps-BIA-DeployModel-"
                       - !Ref UniqueID
-                UserParameters: '{ "InitialInstanceCount": 1, "InitialVariantWeight": 1, "InstanceType": "ml.t2.medium", "EndpointConfigName": "Dev" }'
+                UserParameters: '{ "InitialInstanceCount": 1, "InitialVariantWeight": 1, "InstanceType": "ml.t2.medium", "EndpointConfigName": "Tools" }'
               RunOrder: 1
             - 
               Name: GetDeployStatus
@@ -162,7 +162,7 @@ Resources:
                     - ""
                     - - "MLOps-BIA-DeployModel"
                       - !Ref UniqueID
-                UserParameters: '{ "InitialInstanceCount": 1, "InitialVariantWeight": 1, "InstanceType": "ml.t2.medium", "EndpointConfigName": "Test" }'
+                UserParameters: '{ "InitialInstanceCount": 1, "InitialVariantWeight": 1, "InstanceType": "ml.t2.medium", "EndpointConfigName": "Stage" }'
               RunOrder: 1
             -
               Name: GetDeployStatus
@@ -202,47 +202,6 @@ Resources:
                       - !Ref UniqueID
                 UserParameters: '{ "env": "Test" } '
               RunOrder: 3
-        - 
-          Name: DeployModel-Prod
-          Actions: 
-            - 
-              Name: DeployToProdEnv
-              ActionTypeId: 
-                Category: Invoke
-                Owner: AWS
-                Version: 1
-                Provider: Lambda
-              OutputArtifacts:
-                - Name: HostingInfoProd
-              InputArtifacts:
-                - Name: SourceArtifact
-              Configuration:
-                FunctionName: 
-                  Fn::Join:
-                    - ""
-                    - - "MLOps-BIA-DeployModel-"
-                      - !Ref UniqueID
-                UserParameters: '{ "InitialInstanceCount": 1, "InitialVariantWeight": 1, "InstanceType": "ml.t2.medium", "EndpointConfigName": "Prod" }'
-              RunOrder: 1
-            - 
-              Name: GetDeployStatus
-              ActionTypeId: 
-                Category: Invoke
-                Owner: AWS
-                Version: 1
-                Provider: Lambda
-              OutputArtifacts:
-                - Name: CompletedProdDeploy
-              InputArtifacts:
-                - Name: HostingInfoProd
-              Configuration:
-                FunctionName: 
-                  Fn::Join:
-                    - ""
-                    - - "MLOps-BIA-GetStatus-"
-                      - !Ref UniqueID
-                UserParameters: ' { "stage": "Deployment"} '
-              RunOrder: 2
 
   CodePipelineRole:
     Type: AWS::IAM::Role
@@ -271,6 +230,8 @@ Resources:
       Environment: 
         Variables:
           SageMakerExecutionRole: !GetAtt [SageMakerRole, Arn]
+          SageMakerExecutionRoleStage: 'arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0'
+          StageAccountS3Bucket: 'mlops-bia-data-sam-ab5c9af0'
           SSEKMSKeyIdIn: !Ref KMSMasterKeyID
       FunctionName: 
         Fn::Join:
@@ -340,7 +301,18 @@ Resources:
         - arn:aws:iam::aws:policy/CloudWatchFullAccess
         - arn:aws:iam::aws:policy/AWSCodePipelineFullAccess
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      RoleName: 
+      Policies:
+        - PolicyName: crossaccountaccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - "Effect": "Allow"
+                "Action": "sts:AssumeRole"
+                "Resource": "arn:aws:iam::756752983459:role/AllowAccessToToolsAccountRole-sam-ab5c9af0"
+              - "Effect": "Allow"
+                "Action": "iam:PassRole"
+                "Resource": "arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0"
+      RoleName:
        Fn::Join:
           - ""
           - - "MLOps-BIA-Lambda-ServiceRole-"
