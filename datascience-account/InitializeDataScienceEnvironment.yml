@@ -6,8 +6,12 @@ Parameters:
     Default: yourinitials
     Description: Enter your initials in lower case as a unique identifier for components created 
     AllowedPattern: "^([a-z]|(d(?!d{0,2}.d{1,3}.d{1,3}.d{1,3})))([a-zd]|(.(?!(.|-)))|(-(?!.))){1,61}[a-zd.]$"
+  ToolsAccountAccessRole:
+    Type: String
+    Description: Role ARN (created in IT Tools account) that allows data science account access to IT Tools Account
 
 Resources:
+
   DatascienceS3Bucket:
     Type: AWS::S3::Bucket
     Properties: 
@@ -61,6 +65,7 @@ Resources:
                 ls -la
                 cp -R /home/ec2-user/amazon-sagemaker-devops-with-ml/1-Built-In-Algorithm/* /home/ec2-user/SageMaker/
 
+
   SageMakerNotebookInstance:
     Type: AWS::SageMaker::NotebookInstance
     Properties: 
@@ -72,7 +77,8 @@ Resources:
             - - "Datascience-Notebook-"
               - !Ref UniqueID
       RoleArn: !GetAtt [SageMakerNotebookInstanceRole, Arn]
-      
+
+
   SageMakerNotebookInstanceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -93,7 +99,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: sts:AssumeRole
-                Resource: "arn:aws:iam::480774895708:role/AllowAccessToDevAccountRole-sss-40527430"
+                Resource: !Ref ToolsAccountAccessRole
       RoleName:
         Fn::Join:
            - ""
@@ -109,9 +115,6 @@ Resources:
                  - !Split
                    - "/"
                    - !Ref "AWS::StackId"
-
-
-
 
 Outputs:
       SageMakerNotebookInstance:

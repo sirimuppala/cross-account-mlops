@@ -60,4 +60,3 @@ with open(trained_model_file, "rb") as f:
 with open(local_validation_data_file_tools, "rb") as f:
     tools_s3_client.upload_fileobj(f, target_bucket, target_validation_data_tools)
 
-

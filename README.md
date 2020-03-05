@@ -3,28 +3,40 @@ MLOps with Amazon Sagemaker and Amazon CodePipeline with multiple AWS accounts
 
 ## High Level Steps
 
-1. Create the accounts ()
+1. Prepare for the workshop
 
-2. Tools account 
-2.1 Login as IT administrator
+1.1 You will need three different AWS accounts for this workshop. Note down the AWS Account IDs.
 
-2.2 Execute the prep cloud formation template from tools-account directory
+2. Prepare the IT Tools account.
+
+2.1 Login to IT Tools AWS account.
+
+2.2 Launch CloudFormation Stack
+
+
+
+2.3 Upload lambda zip files to the S3 bucket created in 2.2
+
+* tools-account/lambda-code/MLOps-BIA-DeployModel.py.zip
+* tools-account/lambda-code/MLOps-BIA-GetStatus.py.zip
+* tools-account/lambda-code/MLOps-BIA-EvaluateModel.py.zip
+* tools-account/lambda-code/MLOps-BIA-TrainModel.py.zip
+ 
+2.4 Launch CloudFormation Stack
 
 aws cloudformation deploy --stack-name pre-reqs  --template-file ToolsAcct/pre-reqs.yaml --profile mlops-tools-user 
 
 
-2.2.1 Make note of S3 bucket
-2.2.2 Zip up the lambda files and upload the lambda zip files to the S3 bucket
+3. Prepare the Data Science account.Datascience / Dev Account
+(Note : Resources below will be created by the ServiceCatalog in the workshop.  For
+now using a cloudformation template)
 
-2.3 Execute the build pipeline template
-Note to data S3 bucket and the cross account acess role
+3.1 Launch the cloudformation template to launch these resources
+S3 bucket; Name - datascience; folders - data, models/development, models/release
 
+SageMaker notebook
 
-3. Datascience / Dev Account
-(Note : For Hitachi - Create resources in 3.1 - using service catalog)
-Launch the cloudformation template to launch these resources
-3.1 S3 bucket; Name - datascience; folders - data, models/development, models/release
-3.2 SageMaker notebook
+3.2 
 3.3 Upload the python code.
 3.4 Copy over the model (and data?? from datascience account??)
 

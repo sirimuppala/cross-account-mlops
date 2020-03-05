@@ -13,9 +13,7 @@ Parameters:
   DataScienceAccountID:
     Type: String
     Description: AWS Account ID of the data science account.
-  
 Resources:
-
   CodePipelineArtifactBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -37,34 +35,7 @@ Resources:
                 - !Split
                   - "/"
                   - !Ref "AWS::StackId"
-  #   ------------------------------------------------------------------------------
-  #   Create S3 bucket to store model artifacts created by after successfully 
-  #   completed training of the model.
-  #   IS THIS NEEDED?
-  #   ------------------------------------------------------------------------------
-  #ModelArtifactBucket:
-  #  Type: AWS::S3::Bucket
-  #  Properties:
-  #    AccessControl: BucketOwnerFullControl
-  #    VersioningConfiguration:
-  #      Status: Enabled
-  #    BucketName:
-  #      Fn::Join:
-  #        - ""
-  #        - - "mlops-bia-model-artifacts-"
-  #          - !Ref UniqueID
-  #          - "-"
-  #          - !Select
-  #           - 0
-  #           - !Split
-  #            - "-"
-  #            - !Select
-  #              - 2
-  #              - !Split
-  #                - "/"
-  #                - !Ref "AWS::StackId"
-
-  S3DataBucket:
+  S3DataModelBucket:
     Type: AWS::S3::Bucket
     Properties: 
       AccessControl: BucketOwnerFullControl
@@ -73,7 +44,7 @@ Resources:
       BucketName:
         Fn::Join:
           - ""
-          - - "mlops-bia-data-"
+          - - "mlops-bia-data-model"
             - !Ref UniqueID
             - "-"
             - !Select
@@ -85,7 +56,6 @@ Resources:
                 - !Split
                   - "/"
                   - !Ref "AWS::StackId"
-
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties: 
@@ -109,7 +79,7 @@ Resources:
               OutputArtifacts: 
                 - Name: SourceArtifact
               Configuration: 
-                S3Bucket: !Ref S3DataBucket
+                S3Bucket: !Ref S3DataModelBucket
                 S3ObjectKey: "models/model.tar.gz"
               RunOrder: 1
         -
@@ -130,7 +100,7 @@ Resources:
                 FunctionName:
                   Fn::Join:
                     - ""
-                    - - "MLOps-BIA-DeployModel"
+                    - - "MLOps-BIA-DeployModel-"
                       - !Ref UniqueID
                 UserParameters: '{ "InitialInstanceCount": 1, "InitialVariantWeight": 1, "InstanceType": "ml.t2.medium", "EndpointConfigName": "Dev" }'
               RunOrder: 1
@@ -149,7 +119,7 @@ Resources:
                 FunctionName: 
                   Fn::Join:
                     - ""
-                    - - "MLOps-BIA-GetStatus"
+                    - - "MLOps-BIA-GetStatus-"
                       - !Ref UniqueID
                 UserParameters: ' { "stage": "Deployment"} '
               RunOrder: 2
@@ -209,7 +179,7 @@ Resources:
                 FunctionName:
                   Fn::Join:
                     - ""
-                    - - "MLOps-BIA-GetStatus"
+                    - - "MLOps-BIA-GetStatus-"
                       - !Ref UniqueID
                 UserParameters: ' { "stage": "Deployment"} '
               RunOrder: 2
@@ -293,29 +263,6 @@ Resources:
           - - "MLOps-BIA-CodePipeline-ServiceRole-"
             - !Ref UniqueID
 
-  #TrainLambdaFunction:
-   # Type: "AWS::Lambda::Function"
-    #Properties:
-     # Handler: "MLOps-BIA-TrainModel.lambda_handler"
-      #Role: !GetAtt [LambdaExecutionRole, Arn]
-     # Environment:
-      #  Variables:
-       #   SageMakerExecutionRole: !GetAtt [SageMakerRole, Arn]
-        #  SSEKMSKeyIdIn: !Ref KMSMasterKeyID
-         # ModelArtifactBucket: !Ref ModelArtifactBucket
-        #  S3DataBucket: !Ref S3DataBucket
-        #  AlgoECR: "811284229777.dkr.ecr.us-east-1.amazonaws.com"
-      #FunctionName:
-       # Fn::Join:
-        # - ""
-         #- - "MLOps-BIA-TrainModel-TEST"
-          # - !Ref UniqueID
-      #Code:
-       # S3Bucket: !Ref LambdaFunctionsBucket
-       # S3Key: "MLOps-BIA-TrainModel.py.zip"
-      #Runtime: "python3.6"
-      #Timeout: 900
-
   DeployLambdaFunction:
     Type: "AWS::Lambda::Function"
     Properties: 
@@ -328,7 +275,7 @@ Resources:
       FunctionName: 
         Fn::Join:
          - ""
-         - - "MLOps-BIA-DeployModel"
+         - - "MLOps-BIA-DeployModel-"
            - !Ref UniqueID
       Code:
         S3Bucket: !Ref LambdaFunctionsBucket
@@ -348,7 +295,7 @@ Resources:
       FunctionName: 
         Fn::Join:
          - ""
-         - - "MLOps-BIA-GetStatus"
+         - - "MLOps-BIA-GetStatus-"
            - !Ref UniqueID
       Code:
         S3Bucket: !Ref LambdaFunctionsBucket
@@ -365,7 +312,7 @@ Resources:
         Variables:
           SageMakerExecutionRole: !GetAtt [SageMakerRole, Arn]
           SSEKMSKeyIdIn: !Ref KMSMasterKeyID
-          S3DataBucket: !Ref S3DataBucket
+          S3DataModelBucket: !Ref S3DataModelBucket
       FunctionName: 
         Fn::Join:
          - ""
@@ -396,7 +343,7 @@ Resources:
       RoleName: 
        Fn::Join:
           - ""
-          - - "MLOps-BIA-Lambda-ServiceRole-TEST"
+          - - "MLOps-BIA-Lambda-ServiceRole-"
             - !Ref UniqueID
 
   SageMakerRole:
@@ -460,8 +407,9 @@ Resources:
                 Resource:
                   Fn::Join:
                     - ""
-                    - - !GetAtt S3DataBucket.Arn
+                    - - !GetAtt S3DataModelBucket.Arn
                       - "/"
+                      - "*"
       RoleName:
         Fn::Join:
           - ""
@@ -479,12 +427,9 @@ Resources:
                     - !Ref "AWS::StackId"
 
 Outputs:
-      S3DataBucket:
+      S3DataModelBucket:
         Description: The ID of the S3 Bucket for model training and test data
-        Value: !Ref S3DataBucket
-      #ModelArtifactBucket:
-       # Description: S3 Bucket for storing model ArtifactStore
-       # Value: !Ref ModelArtifactBucket
+        Value: !Ref S3DataModelBucket
       CodePipeline:
         Description: Pipeline created inside the CodePipeline service-role
         Value: !Ref CodePipeline

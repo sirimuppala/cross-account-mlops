@@ -8,7 +8,7 @@ Parameters:
     AllowedPattern: "^([a-z]|(d(?!d{0,2}.d{1,3}.d{1,3}.d{1,3})))([a-zd]|(.(?!(.|-)))|(-(?!.))){1,61}[a-zd.]$"
 
 Resources:
-  S3LambdaFunctionCode:
+  S3PipelineLambdaFunctionCode:
     Type: AWS::S3::Bucket
     Properties: 
       AccessControl: BucketOwnerFullControl
@@ -29,3 +29,7 @@ Resources:
                 - !Split
                   - "/"
                   - !Ref "AWS::StackId"
+Outputs:
+      S3PipelineLambdaFunctionCode:
+        Description: The ID of the S3 Bucket for lambda functions
+        Value: !Ref S3PipelineLambdaFunctionCode
