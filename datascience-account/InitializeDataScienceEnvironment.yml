@@ -55,18 +55,43 @@ Resources:
                   - "/"
                   - !Ref "AWS::StackId"
       OnCreate:
-        - Content: 
-            Fn::Base64: !Sub |
+        #- Content:
+         # - Fn::Base64: !Join
+          #  - '\n'
+           # - - !Sub |
                 #!/bin/bash
-                set -e
-                sudo -i -u ec2-user bash << EOF
+            #    set -e
+             #   echo "export tools_bucket_name=mlops-data-model" >> /etc/profile.d/jupyter-env.sh
+              #  echo "export tools_account_id=${ToolsAccountID}" >> /etc/profile.d/jupyter-env.sh
+                #echo "Hello ${ToolsAccountID}"
+               # initctl restart jupyter-server
+             # - !Sub |
+              #  sudo -i -u ec2-user bash << EOF
+              #  echo "Setup the Workshop exercises"
+               # pwd
+               # git clone https://github.com/aws-samples/amazon-sagemaker-devops-with-ml.git
+               # pwd
+               # ls -la
+               # cp -R /home/ec2-user/amazon-sagemaker-devops-with-ml/1-Built-In-Algorithm/* /home/ec2-user/SageMaker/
+
+        - Content:
+            Fn::Base64: !Sub |
+              #!/bin/bash
+              set -e
+
+              echo "export datascience_bucket_name=mlops-data-model-${AWS::AccountID}" >> /etc/profile.d/jupyter-env.sh
+              echo "export tools_bucket_name=mlops-bia-data-model-${ToolsAccountID}" >> /etc/profile.d/jupyter-env.sh
+              echo "export tools_account_access_role_arn=arn:aws:iam::${ToolsAccountID}:role/AllowAccessToDataScienceAccountRole-${ToolsAccountID}" >> /etc/profile.d/jupyter-env.sh
+              initctl restart jupyter-server
+
+              sudo -i -u ec2-user bash << EOF
                 echo "Setup the Workshop exercises"
+
                 pwd
                 git clone https://github.com/aws-samples/amazon-sagemaker-devops-with-ml.git
                 pwd
                 ls -la
                 cp -R /home/ec2-user/amazon-sagemaker-devops-with-ml/1-Built-In-Algorithm/* /home/ec2-user/SageMaker/
-                export TEST_VAR='test'
 
   SageMakerNotebookInstance:
     Type: AWS::SageMaker::NotebookInstance

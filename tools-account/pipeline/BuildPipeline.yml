@@ -48,18 +48,18 @@ Resources:
       BucketName:
         Fn::Join:
           - ""
-          - - "mlops-bia-data-model"
-            - !Ref UniqueID
-            - "-"
-            - !Select
-             - 0
-             - !Split
-              - "-"
-              - !Select
-                - 2
-                - !Split
-                  - "/"
-                  - !Ref "AWS::StackId"
+          - - "mlops-bia-data-model-"
+            - !Ref "AWS::AccountId"
+            #- "-"
+            #- !Select
+             #- 0
+             #- !Split
+              #- "-"
+              #- !Select
+               # - 2
+                #- !Split
+                 # - "/"
+                  #- !Ref "AWS::StackId"
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties: 
