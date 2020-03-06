@@ -16,19 +16,20 @@ Resources:
         Status: Enabled
       BucketName:
         Fn::Join:
-          - ""
-          - - "mlops-bia-lambda-code-"
-            - !Ref UniqueID
-            - "-"
-            - !Select
-             - 0
-             - !Split
-              - "-"
-              - !Select
-                - 2
-                - !Split
-                  - "/"
-                  - !Ref "AWS::StackId"
+          - "-"
+          - - "mlops-bia-lambda-code"
+            - !Ref "AWS::AccountId"
+            #- !Ref UniqueID
+            #- "-"
+            #- !Select
+             #- 0
+             #- !Split
+              #- "-"
+              #- !Select
+               # - 2
+               # - !Split
+                #  - "/"
+                #  - !Ref "AWS::StackId"
 Outputs:
       S3PipelineLambdaFunctionCode:
         Description: The ID of the S3 Bucket for lambda functions

@@ -8,11 +8,15 @@ Parameters:
     AllowedPattern: "^([a-z]|(d(?!d{0,2}.d{1,3}.d{1,3}.d{1,3})))([a-zd]|(.(?!(.|-)))|(-(?!.))){1,61}[a-zd.]$"
   LambdaFunctionsBucket:
     Type: String
-    Default: mlops-bia-lambda-code-yourinitials-uniqueid
+    #Default: mlops-bia-lambda-code-yourinitials-uniqueid
+    Default: mlops-bia-lambda-code
     Description: S3 Bucket containing your Lambda Functions (Should match the bucket created by the PrepPipeline stack
   DataScienceAccountID:
     Type: String
-    Description: AWS Account ID of the data science account.
+    Description: AWS Account ID of the data science account
+  StageAccountID:
+    Type: String
+    Description: AWS Account ID of the staging account.
 Resources:
   CodePipelineArtifactBucket:
     Type: AWS::S3::Bucket
@@ -230,8 +234,20 @@ Resources:
       Environment: 
         Variables:
           SageMakerExecutionRole: !GetAtt [SageMakerRole, Arn]
-          SageMakerExecutionRoleStage: 'arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0'
-          StageAccountS3Bucket: 'mlops-bia-data-sam-ab5c9af0'
+          SageMakerExecutionRoleStage:
+            Fn::Join:
+              - ""
+              - - 'arn:aws:iam::'
+                - !Ref StageAccountID
+                - ':role/SageMakerExecutionRole-'
+                - !Ref StageAccountID
+                  #'arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0'
+          #StageAccountS3Bucket: 'mlops-bia-data-sam-ab5c9af0'
+          StageAccountS3Bucket:
+            Fn::Join:
+              - "-"
+              - - "mlops-bia-data-model"
+                - !Ref StageAccountID
           SSEKMSKeyIdIn: !Ref KMSMasterKeyID
       FunctionName: 
         Fn::Join:
@@ -239,7 +255,12 @@ Resources:
          - - "MLOps-BIA-DeployModel-"
            - !Ref UniqueID
       Code:
-        S3Bucket: !Ref LambdaFunctionsBucket
+        #S3Bucket: !Ref LambdaFunctionsBucket
+        S3Bucket:
+          Fn::Join:
+            - "-"
+            - - !Ref LambdaFunctionsBucket
+              - !Ref "AWS::AccountId"
         S3Key: "MLOps-BIA-DeployModel.py.zip"
       Runtime: "python3.6"
       Timeout: 900
@@ -259,7 +280,12 @@ Resources:
          - - "MLOps-BIA-GetStatus-"
            - !Ref UniqueID
       Code:
-        S3Bucket: !Ref LambdaFunctionsBucket
+        #S3Bucket: !Ref LambdaFunctionsBucket
+        S3Bucket:
+          Fn::Join:
+            - "-"
+            - - !Ref LambdaFunctionsBucket
+              - !Ref "AWS::AccountId"
         S3Key: "MLOps-BIA-GetStatus.py.zip"
       Runtime: "python3.6"
       Timeout: 900
@@ -280,7 +306,12 @@ Resources:
          - - "MLOps-BIA-EvaluateModel-"
            - !Ref UniqueID
       Code:
-        S3Bucket: !Ref LambdaFunctionsBucket 
+        #S3Bucket: !Ref LambdaFunctionsBucket
+        S3Bucket:
+          Fn::Join:
+            - "-"
+            - - !Ref LambdaFunctionsBucket
+              - !Ref "AWS::AccountId"
         S3Key: "MLOps-BIA-EvaluateModel.py.zip"
       Runtime: "python3.6"
       Timeout: 900
@@ -308,10 +339,22 @@ Resources:
             Statement:
               - "Effect": "Allow"
                 "Action": "sts:AssumeRole"
-                "Resource": "arn:aws:iam::756752983459:role/AllowAccessToToolsAccountRole-sam-ab5c9af0"
+                #"Resource": "arn:aws:iam::756752983459:role/AllowAccessToToolsAccountRole-sam-ab5c9af0"
+                "Resource":
+                  Fn::Join:
+                    - ""
+                    - - 'arn:aws:iam::'
+                      - !Ref StageAccountID
+                      - ':role/AllowAccessToToolsAccountRole'
               - "Effect": "Allow"
                 "Action": "iam:PassRole"
-                "Resource": "arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0"
+                #"Resource": "arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0"
+                "Resource":
+                  Fn::Join:
+                    - ""
+                    - - 'arn:aws:iam::'
+                      - !Ref StageAccountID
+                      - ':role/SageMakerExecutionRole'
       RoleName:
        Fn::Join:
           - ""
@@ -359,7 +402,7 @@ Resources:
             Action: "kms:*"
             Resource: "*"
 
-  AllowAccessToDevAccountRole:
+  AllowAccessToDataScienceAccountRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -384,19 +427,19 @@ Resources:
                       - "*"
       RoleName:
         Fn::Join:
-          - ""
-          - - "AllowAccessToDevAccountRole-"
-            - !Ref UniqueID
-            - "-"
-            - !Select
-              - 0
-              - !Split
-                - "-"
-                - !Select
-                  - 2
-                  - !Split
-                    - "/"
-                    - !Ref "AWS::StackId"
+          - "-"
+          - - "AllowAccessToDataScienceAccountRole"
+            - !Ref "AWS::AccountId"
+            #- "-"
+            #- !Select
+             # - 0
+              #- !Split
+               # - "-"
+                #- !Select
+                 # - 2
+                  #- !Split
+                   # - "/"
+                    #- !Ref "AWS::StackId"
 
 Outputs:
       S3DataModelBucket:

@@ -34,6 +34,7 @@ def lambda_handler(event, context):
         event['status'] = 'Creating'
 
         endpoint_environment = config_param["EndpointConfigName"]
+        ##TODO : This needs to come the pipeline, not hardcoded.
         # endpoint_environment="Tools"
         # endpoint_environment = "Stage"
         print("[INFO]Endpoint environment:", endpoint_environment)
@@ -41,6 +42,7 @@ def lambda_handler(event, context):
         print('[INFO]INITIAL_VARIANT_WEIGHT:', initial_variant_weight)
 
         ##TODO : This should come from parameters
+        ##TODO PARAM
         trainingImage = "433757028032.dkr.ecr.us-west-2.amazonaws.com/xgboost:1"
 
         modelArtifact = 'https://{}.s3-{}.amazonaws.com/{}'.format(bucketname, region, objectKey)
