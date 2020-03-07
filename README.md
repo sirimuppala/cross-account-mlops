@@ -12,7 +12,7 @@ Few terminologies to get familiar with before we get started with lab provisioni
 **Non-Production Account** - An AWS account where the code pipeline deploys and validates the models before deploying into a production account.
 **Production Account** - An AWS account where the production applications run. MLOps code pipeline auto-deploy the models.
 
-**Note:** For this lab, we are combining the Non-Production Account and Production Account and call it as staging account. You expect to see a total of THREE aws accounts.
+**Note:** For this lab, we are combining the Non-Production Account and Production Account and call it as staging account. You expect to see a total of ***THREE aws accounts***.
 
 ## Steps Involved
 
@@ -55,7 +55,7 @@ https://us-east-2.console.aws.amazon.com/cloudformation#/stacks/new?stackName=La
 1.7. Wait for the stack to deploy resource completely.
 
 1.8. Choose **Outputs** section and note down the values of **MasterPortfolioId** and **SagemakerProductID**. You will use this information in next step.
-![Outputs Screenshot](servicecatalog-products/ToolsAccount_Outputs.png)
+![Outputs Screenshot](images/ToolsAccount_Outputs.png)
 
 1.9. Go to Service Catalog Console - https://us-east-2.console.aws.amazon.com/servicecatalog/ and choose **Portfolios** and **Data Scientists - Sample Portfolio**
 
@@ -78,6 +78,7 @@ https://us-east-2.console.aws.amazon.com/cloudformation#/stacks/new?stackName=La
 1.16. Scroll down **Review LabDSAccountSCSetup** page and select **I acknowledge that AWS CloudFormation might create IAM resources** option and choose **Create stack**
 
 1.17. Check in the **Outputs** tab, and note down the **SwitchRoleLink** role. You will use the URL link value to switch role as Data Scientist in Step-2 below.
+![Outputs Screenshot](images/DS-PrepStackOutput.png)
 
 #### Deploy Resources in Staging / Production Accounts
 
@@ -91,8 +92,30 @@ In this section, you will login in as a **Data Scientist** and launch a Secure S
 2.1. Log in to the **Data Scientists** account using the same credentials as you used in step 1.11
 
 2.2. Switch to **Data Scientist** role, using the URL you copied in Step 1.17
+![Outputs Screenshot](images/DS-SwitchRole.png)
 
-2.3. 
+2.3. Under **Find services**, search and choose for **Service Catalog**  
+
+2.4. Now you will see a "Amazon Secure Sagemaker" product under **Products list**. 
+![SC Login Screen for Data Scientists](images/DS-ScProduct.png)
+**PS:** If you don't see a product in your page, ensure you were able to switch the role properly and also in correct region. You can get this information from the ***top-right corner*** of the page.
+
+2.5. Choose the product and click on **LAUNCH PRODUCT** button
+
+2.6. Under **Product version** page, enter a name for your service catalog product and choose **NEXT**
+
+2.7. Select **SagemakerInstance** notebook instance size and select a team name **TeamName**
+
+2.8. In TagOptions page, select a **Value** from drop-down for tag **cost-center** and choose **NEXT**
+
+2.9. Leave defaults in **Notifications** page and choose **NEXT**
+
+2.10. Under **Review** page, review all the options selected and choose **LAUNCH**
+
+2.11. On sucessful completion of the SC product launch, the Data scientist can get the notebook access information on **Outputs** page of the provisioned product (as shown below).
+![SC Outputs](images/DS-ProvisionedProduct.png)
+
+2.12. Click on **SageMakerNoteBookURL** to open the Notebook interface on the console. Alternatively, Click on **SageMakerNoteBookTerminalURL** to open the Terminal.
 
 #### Access Sagemaker notebook
 
