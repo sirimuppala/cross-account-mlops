@@ -355,31 +355,31 @@ Resources:
   PrivateSubnetAId:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: Subnet for Funteam
-      Name: funteam-subnetId
+      Description: Subnet for forecasting team
+      Name: forecasting-subnetId
       Type: String
       Value: !Ref Subnet1
 
   PrivateSubnetBId:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: Subnet for CoolTeam
-      Name: coolteam-subnetId
+      Description: Subnet for sentiment-analysis team
+      Name: sentiment-analysis-subnetId
       Type: String
       Value: !Ref Subnet2
 
   PrivateSubnetCId:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: Subnet for SuperCoolers
-      Name: supercoolers-subnetId
+      Description: Subnet for mnist team
+      Name: mnist-subnetId
       Type: String
       Value: !Ref Subnet3
 
   VPCA:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: Subnet for Funteam
+      Description: Subnet for forecasting team
       Name: forecasting-vpc
       Type: String
       Value: !Ref VPC
@@ -387,7 +387,7 @@ Resources:
   VPCB:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: Subnet for CoolTeam
+      Description: Subnet for sentiment-analysis team
       Name: sentiment-analysis-vpc
       Type: String
       Value: !Ref VPC
@@ -395,7 +395,7 @@ Resources:
   VPCC:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: Subnet for SuperCoolers
+      Description: Subnet for mnist team
       Name: mnist-vpc
       Type: String
       Value: !Ref VPC
