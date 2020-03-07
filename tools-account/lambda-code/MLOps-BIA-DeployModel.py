@@ -42,7 +42,6 @@ def lambda_handler(event, context):
         print('[INFO]INITIAL_VARIANT_WEIGHT:', initial_variant_weight)
 
         ##TODO : This should come from parameters
-        ##TODO PARAM
         trainingImage = "433757028032.dkr.ecr.us-west-2.amazonaws.com/xgboost:1"
 
         modelArtifact = 'https://{}.s3-{}.amazonaws.com/{}'.format(bucketname, region, objectKey)
@@ -75,6 +74,7 @@ def lambda_handler(event, context):
             event['endpoint'] = endpoint_config_name
             event['endpoint_config'] = endpoint_config_name
             event['job_name'] = jobName
+            event['endpoint_environment'] = endpoint_environment
 
             write_job_info_s3(event)
             put_job_success(event)
@@ -90,15 +90,15 @@ def lambda_handler(event, context):
             s3.download_file(bucketname, objectKey, downloaded_model_artifact)
             print("Downloaded model to local.")
 
-            ##Use the IAM role that is created in stage account, which gives access Stage accounts
+            # Use the IAM role that is created in stage account, which gives access Stage accounts
             ##resources to Tools account.
             # This should have been created in the stage account
-            ##TODO PARAM
-            tools_account_access_arn = 'arn:aws:iam::756752983459:role/AllowAccessToToolsAccountRole-sam-ab5c9af0'
+            stageAccountAccessArn = os.environ['StageAccountAccessRole']
+            sagemakerRole = os.environ['SageMakerExecutionRole']
 
             sts_connection = boto3.client('sts')
             acct_b = sts_connection.assume_role(
-                RoleArn=tools_account_access_arn,
+                RoleArn=stageAccountAccessArn,
                 RoleSessionName="cross_acct_lambda"
             )
 
@@ -117,7 +117,7 @@ def lambda_handler(event, context):
             print("stage_s3_client", s3)
 
             ##Copy model artifact to the Stage S3 bucket
-            stage_bucket = 'mlops-bia-data-sam-ab5c9af0'  ##TODO PARAM
+            stage_bucket = os.environ['StageAccountS3Bucket']
             stage_objectKey = objectKey
             with open(downloaded_model_artifact, "rb") as f:
                 s3.upload_fileobj(f, stage_bucket, stage_objectKey)
@@ -136,9 +136,7 @@ def lambda_handler(event, context):
             print("modelArtifact in Stage account ", modelArtifact)
 
             # Role to pass to SageMaker training job that has access to training data in S3, etc
-            ##TODO : Need to be passed in as parameters.
             sagemakerRole = os.environ['SageMakerExecutionRoleStage']
-            # SageMakerRole = 'arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0'  ##TODO:PARAM
 
             create_model(sagemaker, sagemakerRole, jobName, trainingImage, modelArtifact)
             endpoint_config_name = jobName + '-' + endpoint_environment
@@ -152,6 +150,7 @@ def lambda_handler(event, context):
             event['endpoint'] = endpoint_config_name
             event['endpoint_config'] = endpoint_config_name
             event['job_name'] = jobName
+            event['endpoint_environment'] = endpoint_environment
 
             write_job_info_s3(event)
             put_job_success(event)
@@ -257,7 +256,6 @@ def create_endpoint(sagemaker, endpoint_config_name):
 def read_job_info(event):
     tmp_file = tempfile.NamedTemporaryFile()
 
-    # objectKey = event['CodePipeline.job']['data']['inputArtifacts'][0]['location']['s3Location']['objectKey']
     objectKey = event['CodePipeline.job']['data']['inputArtifacts'][0]['location']['s3Location']['objectKey']
 
     print("[INFO]Object:", objectKey)

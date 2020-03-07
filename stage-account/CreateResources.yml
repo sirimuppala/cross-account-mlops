@@ -44,6 +44,15 @@ Resources:
               - Effect: Allow
                 Action: sagemaker:*
                 Resource: "*"
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource:
+                  Fn::Join:
+                    - ""
+                    - - 'arn:aws:iam::'
+                      - !Ref "AWS::AccountId"
+                      - ':role/SageMakerExecutionRole-'
+                      - !Ref "AWS::AccountId"
       RoleName:
         Fn::Join:
           - "-"

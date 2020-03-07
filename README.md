@@ -14,6 +14,10 @@ Few terminologies to get familiar with before we get started with lab provisioni
 
 **Note:** For this lab we are combining Non Production Account and Production Account in to staging account. You expect to see total of THREE aws accounts.
 
+This lab will build the following architecture
+
+![ee-login](images/MLOps_CrossAccount_Architecture.jpg) 
+
 ## Steps Involved
 
 * **Step-1** Prepare the Lab environment <br>

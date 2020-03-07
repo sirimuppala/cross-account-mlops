@@ -12,7 +12,8 @@ code_pipeline = boto3.client('codepipeline')
 runtime_client = boto3.client('runtime.sagemaker')
 
 # ARN of IAM role Amazon SageMaker can assume to access model artifacts and docker image for deployment
-SageMakerRole = os.environ['SageMakerExecutionRole']
+# SageMakerRole = os.environ['SageMakerExecutionRole']
+
 
 # use json to send data to model and get back the prediction.
 JSON_CONTENT_TYPE = "text/csv"
@@ -38,26 +39,32 @@ def lambda_handler(event, context):
         environment = test_info["env"]
         print("[INFO]ENVIRONMENT:", environment)
 
+        endpointConfigSuffix = test_info['endpointConfigSuffix']
+        print("[INFO]endpointConfigName is:", endpointConfigSuffix)
+
         # Environment variable containing S3 bucket for data used for validation and/or smoke test
         data_bucket = os.environ['S3DataModelBucket']
         print("[INFO]DATA_BUCKET:", data_bucket)
 
-        if environment == 'Dev':
-            # key = 'smoketest/smoketest.csv'
-            # key = 'data/validation_tools.csv'
-            key = 'data/abalone.test'
+        # eval = evaluate_model(data_bucket,endpointConfigSuffix,endpointName)
+
+        write_job_info_s3(event)
+        put_job_success(event)
+
+        if endpointConfigSuffix == 'Tools':
+            key = 'data/abalone.validation'
 
             print("[INFO]Smoke Test Info:" + environment + " S3 Data Bucket: " + data_bucket + " S3 Prefix/Key: " + key)
-            dev_eval = evaluate_model(data_bucket, key, endpointName)
+            dev_eval = evaluate_model(data_bucket, key, endpointName, endpointConfigSuffix)
             print('[SUCCESS] Smoke Test Complete')
 
             write_job_info_s3(event)
             put_job_success(event)
 
-        elif environment == 'Test':
-            key = 'validation/validation.csv'
+        elif endpointConfigSuffix == 'Stage':
+            key = 'data/abalone.validation'
             print("[INFO]Full Test Info:" + environment + " S3 Data Bucket: " + data_bucket + " S3 Prefix/Key: " + key)
-            test_eval = evaluate_model(data_bucket, key, endpointName)
+            test_eval = evaluate_model(data_bucket, key, endpointName, endpointConfigSuffix)
             print('[SUCCESS] Full Test Complete')
             write_job_info_s3(event)
             put_job_success(event)
@@ -71,7 +78,7 @@ def lambda_handler(event, context):
     return event
 
 
-def evaluate_model(data_bucket, key, endpointName):
+def evaluate_model(data_bucket, key, endpointName, endpointConfigSuffix):
     # Get the object from the event and show its content type
     s3 = boto3.resource('s3')
     download_path = '/tmp/tmp.test'
@@ -87,7 +94,7 @@ def evaluate_model(data_bucket, key, endpointName):
 
         labels = [int(line.split(' ')[0]) for line in payload.split('\n')]
         test_data = [line for line in payload.split('\n')]
-        preds = batch_predict(test_data, 100, endpointName, 'text/x-libsvm')
+        preds = batch_predict(test_data, 100, endpointName, 'text/x-libsvm', endpointConfigSuffix)
 
         print(preds)
 
@@ -100,29 +107,75 @@ def evaluate_model(data_bucket, key, endpointName):
     return preds
 
 
-def do_predict(data, endpoint_name, content_type):
+def do_predict(data, endpoint_name, content_type, endpointConfigSuffix):
     payload = '\n'.join(data)
-    response = runtime_client.invoke_endpoint(EndpointName=endpoint_name,
-                                              ContentType=content_type,
-                                              Body=payload)
-    result = response['Body'].read()
-    result = result.decode("utf-8")
-    result = result.split(',')
-    preds = [float((num)) for num in result]
-    preds = [math.ceil(num) for num in preds]
+    if endpointConfigSuffix == 'Tools':
+
+        response = runtime_client.invoke_endpoint(EndpointName=endpoint_name,
+                                                  ContentType=content_type,
+                                                  Body=payload)
+        result = response['Body'].read()
+        result = result.decode("utf-8")
+        result = result.split(',')
+        preds = [float((num)) for num in result]
+        preds = [math.ceil(num) for num in preds]
+    elif endpointConfigSuffix == 'Stage':
+
+        stageAccountAccessArn = os.environ['StageAccountAccessRole']
+
+        sts_connection = boto3.client('sts')
+
+        acct_b = sts_connection.assume_role(
+            RoleArn=stageAccountAccessArn,
+            RoleSessionName="cross_acct_lambda"
+        )
+
+        ACCESS_KEY = acct_b['Credentials']['AccessKeyId']
+        SECRET_KEY = acct_b['Credentials']['SecretAccessKey']
+        SESSION_TOKEN = acct_b['Credentials']['SessionToken']
+
+        cross_account_runtime_client = boto3.client(
+            'runtime.sagemaker',
+            aws_access_key_id=ACCESS_KEY,
+            aws_secret_access_key=SECRET_KEY,
+            aws_session_token=SESSION_TOKEN
+        )
+
+        # sagemaker = boto3.client('sagemaker')
+        # cross_account_sagemaker = boto3.client(
+        #     'sagemaker',
+        #    aws_access_key_id=ACCESS_KEY,
+        #   aws_secret_access_key=SECRET_KEY,
+        #  aws_session_token=SESSION_TOKEN,
+        # )
+
+        print("Created cross account sagemaker runtime client")
+
+        # response = cross_account_sagemaker.describe_endpoint(
+        #       EndpointName=jobName
+        # )
+
+        response = cross_account_runtime_client.invoke_endpoint(EndpointName=endpoint_name,
+                                                                ContentType=content_type,
+                                                                Body=payload)
+        result = response['Body'].read()
+        result = result.decode("utf-8")
+        result = result.split(',')
+        preds = [float((num)) for num in result]
+        preds = [math.ceil(num) for num in preds]
     return preds
 
 
-def batch_predict(data, batch_size, endpoint_name, content_type):
+def batch_predict(data, batch_size, endpoint_name, content_type, endpointConfigSuffix):
     items = len(data)
     arrs = []
 
     for offset in range(0, items, batch_size):
         if offset + batch_size < items:
-            results = do_predict(data[offset:(offset + batch_size)], endpoint_name, content_type)
+            results = do_predict(data[offset:(offset + batch_size)], endpoint_name, content_type, endpointConfigSuffix)
             arrs.extend(results)
         else:
-            arrs.extend(do_predict(data[offset:items], endpoint_name, content_type))
+            arrs.extend(do_predict(data[offset:items], endpoint_name, content_type, endpointConfigSuffix))
         # sys.stdout.write('.')
     return (arrs)
 

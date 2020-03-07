@@ -8,7 +8,6 @@ Parameters:
     AllowedPattern: "^([a-z]|(d(?!d{0,2}.d{1,3}.d{1,3}.d{1,3})))([a-zd]|(.(?!(.|-)))|(-(?!.))){1,61}[a-zd.]$"
   LambdaFunctionsBucket:
     Type: String
-    #Default: mlops-bia-lambda-code-yourinitials-uniqueid
     Default: mlops-bia-lambda-code
     Description: S3 Bucket containing your Lambda Functions (Should match the bucket created by the PrepPipeline stack
   DataScienceAccountID:
@@ -125,7 +124,7 @@ Resources:
                     - ""
                     - - "MLOps-BIA-GetStatus-"
                       - !Ref UniqueID
-                UserParameters: ' { "stage": "Deployment"} '
+                UserParameters: '{ "stage": "Deployment", "endpointConfigSuffix": "Tools"}'
               RunOrder: 2
             - 
               Name: SmokeTest
@@ -144,48 +143,48 @@ Resources:
                     - ""
                     - - "MLOps-BIA-EvaluateModel-"
                       - !Ref UniqueID
-                UserParameters: ' { "env": "Dev" } '
+                UserParameters: ' { "env": "Dev", "endpointConfigSuffix": "Tools" } '
               RunOrder: 3
         -
-          Name: DeployModel-Test
+          Name: DeployModel-Stage
           Actions:
             -
-              Name: DeployToTestEnv
+              Name: DeployToStageEnv
               ActionTypeId:
                 Category: Invoke
                 Owner: AWS
                 Version: 1
                 Provider: Lambda
               OutputArtifacts:
-                - Name: HostingInfoTest
+                - Name: StageHostingInfo
               InputArtifacts:
                 - Name: SourceArtifact
               Configuration:
                 FunctionName:
                   Fn::Join:
                     - ""
-                    - - "MLOps-BIA-DeployModel"
+                    - - "MLOps-BIA-DeployModel-"
                       - !Ref UniqueID
                 UserParameters: '{ "InitialInstanceCount": 1, "InitialVariantWeight": 1, "InstanceType": "ml.t2.medium", "EndpointConfigName": "Stage" }'
               RunOrder: 1
             -
-              Name: GetDeployStatus
+              Name: GetStageDeployStatus
               ActionTypeId:
                 Category: Invoke
                 Owner: AWS
                 Version: 1
                 Provider: Lambda
               OutputArtifacts:
-                - Name: CompletedTestDeploy
+                - Name: CompletedStageDeploy
               InputArtifacts:
-                - Name: HostingInfoTest
+                - Name: StageHostingInfo
               Configuration:
                 FunctionName:
                   Fn::Join:
                     - ""
                     - - "MLOps-BIA-GetStatus-"
                       - !Ref UniqueID
-                UserParameters: ' { "stage": "Deployment"} '
+                UserParameters: '{ "stage": "Deployment", "endpointConfigSuffix": "Stage"}'
               RunOrder: 2
             -
               Name: FullTest
@@ -197,14 +196,14 @@ Resources:
               OutputArtifacts:
                 - Name: FullTestOut
               InputArtifacts:
-                - Name: HostingInfoTest
+                - Name: StageHostingInfo
               Configuration:
                 FunctionName:
                   Fn::Join:
                     - ""
                     - - "MLOps-BIA-EvaluateModel-"
                       - !Ref UniqueID
-                UserParameters: '{ "env": "Test" } '
+                UserParameters: '{ "env": "Test", "endpointConfigSuffix": "Stage"} '
               RunOrder: 3
 
   CodePipelineRole:
@@ -248,6 +247,14 @@ Resources:
               - "-"
               - - "mlops-bia-data-model"
                 - !Ref StageAccountID
+          StageAccountAccessRole:
+            Fn::Join:
+              - ""
+              - - 'arn:aws:iam::'
+                - !Ref StageAccountID
+                - ':role/AllowAccessToToolsAccountRole-'
+                - !Ref StageAccountID
+                #'arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0'      -
           SSEKMSKeyIdIn: !Ref KMSMasterKeyID
       FunctionName: 
         Fn::Join:
@@ -272,8 +279,16 @@ Resources:
       Role: !GetAtt [LambdaExecutionRole, Arn]
       Environment: 
         Variables:
-          SageMakerExecutionRole: !GetAtt [SageMakerRole, Arn]
+          #SageMakerExecutionRole: !GetAtt [SageMakerRole, Arn]
           SSEKMSKeyIdIn: !Ref KMSMasterKeyID
+          StageAccountAccessRole:
+            Fn::Join:
+              - ""
+              - - 'arn:aws:iam::'
+                - !Ref StageAccountID
+                - ':role/AllowAccessToToolsAccountRole-'
+                - !Ref StageAccountID
+                #'arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0'
       FunctionName: 
         Fn::Join:
          - ""
@@ -297,9 +312,17 @@ Resources:
       Role: !GetAtt [LambdaExecutionRole, Arn]
       Environment: 
         Variables:
-          SageMakerExecutionRole: !GetAtt [SageMakerRole, Arn]
+          #SageMakerExecutionRole: !GetAtt [SageMakerRole, Arn]
           SSEKMSKeyIdIn: !Ref KMSMasterKeyID
           S3DataModelBucket: !Ref S3DataModelBucket
+          StageAccountAccessRole:
+            Fn::Join:
+              - ""
+              - - 'arn:aws:iam::'
+                - !Ref StageAccountID
+                - ':role/AllowAccessToToolsAccountRole-'
+                - !Ref StageAccountID
+                #'arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0'
       FunctionName: 
         Fn::Join:
          - ""
@@ -345,7 +368,8 @@ Resources:
                     - ""
                     - - 'arn:aws:iam::'
                       - !Ref StageAccountID
-                      - ':role/AllowAccessToToolsAccountRole'
+                      - ':role/AllowAccessToToolsAccountRole-'
+                      - !Ref StageAccountID
               - "Effect": "Allow"
                 "Action": "iam:PassRole"
                 #"Resource": "arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0"
@@ -354,7 +378,8 @@ Resources:
                     - ""
                     - - 'arn:aws:iam::'
                       - !Ref StageAccountID
-                      - ':role/SageMakerExecutionRole'
+                      - ':role/SageMakerExecutionRole-'
+                      - !Ref StageAccountID
       RoleName:
        Fn::Join:
           - ""
