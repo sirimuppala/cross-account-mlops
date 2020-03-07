@@ -16,10 +16,12 @@ Parameters:
     Description: >-
       SC Portfolio Id from the master account (port-012345678901).
     Type: String
+    AllowedPattern: 'port-[A-Za-z0-9-]{13}'
   SagemakerProductID:
     Description: >-
-      Sagemaker product ID on the master account (port-123456789012).
+      Sagemaker product ID on the master account (prod-123456789012).
     Type: String
+    AllowedPattern: 'prod-[A-Za-z0-9-]{13}'
 
 Resources:
   AcceptedPortfolioShare:
@@ -378,7 +380,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Description: Subnet for Funteam
-      Name: funteam-vpc
+      Name: forecasting-vpc
       Type: String
       Value: !Ref VPC
 
@@ -386,7 +388,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Description: Subnet for CoolTeam
-      Name: coolteam-vpc
+      Name: sentiment-analysis-vpc
       Type: String
       Value: !Ref VPC
 
@@ -394,7 +396,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Description: Subnet for SuperCoolers
-      Name: supercoolers-vpc
+      Name: mnist-vpc
       Type: String
       Value: !Ref VPC
 
