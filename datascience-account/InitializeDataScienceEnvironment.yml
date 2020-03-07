@@ -24,17 +24,7 @@ Resources:
         Fn::Join:
           - ""
           - - "datascience-project-"
-            - !Ref UniqueID
-            - "-"
-            - !Select
-             - 0
-             - !Split
-              - "-"
-              - !Select
-                - 2
-                - !Split
-                  - "/"
-                  - !Ref "AWS::StackId"
+            - !Ref "AWS::AccountId"
 
   SageMakerNotebookLifecycleConfig:
     Type: AWS::SageMaker::NotebookInstanceLifecycleConfig
@@ -79,7 +69,6 @@ Resources:
               #!/bin/bash
               set -e
 
-              echo "export datascience_bucket_name=mlops-data-model-${AWS::AccountID}" >> /etc/profile.d/jupyter-env.sh
               echo "export tools_bucket_name=mlops-bia-data-model-${ToolsAccountID}" >> /etc/profile.d/jupyter-env.sh
               echo "export tools_account_access_role_arn=arn:aws:iam::${ToolsAccountID}:role/AllowAccessToDataScienceAccountRole-${ToolsAccountID}" >> /etc/profile.d/jupyter-env.sh
               initctl restart jupyter-server
