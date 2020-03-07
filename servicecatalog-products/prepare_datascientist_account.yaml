@@ -14,14 +14,12 @@ Mappings:
 Parameters:
   MasterPortfolioId:
     Description: >-
-      SC Portfolio Id from the master account. Can be obtained from output of the tools account stack.
+      SC Portfolio Id from the master account (port-012345678901).
     Type: String
-    Default: port-FILLMEINFIRST
   SagemakerProductID:
     Description: >-
-      Sagemaker product ID on the master account. Can be obtained from output of the tools account stack.
+      Sagemaker product ID on the master account (port-123456789012).
     Type: String
-    Default: prod-FILLMEINALSO
 
 Resources:
   AcceptedPortfolioShare:
@@ -400,3 +398,7 @@ Resources:
       Type: String
       Value: !Ref VPC
 
+Outputs:
+  SwitchRoleLink:
+    Description: URL to switch role as Data Science user
+    Value: !Join ['', ['https://signin.aws.amazon.com/switchrole?account=', !Ref 'AWS::AccountId', '&roleName=', !Ref 'DataScientistRole', '&displayName=DataScientistRole']]

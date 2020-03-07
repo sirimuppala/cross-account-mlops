@@ -13,7 +13,7 @@ Parameters:
 Mappings:
   S3RefLinks:
     'SCSagemakerTemplate':
-      Location: 'https://vinjak-outbox.s3.us-east-2.amazonaws.com/SageMakerProduct.yml'
+      Location: 'https://marketplace-sa-resources.s3.amazonaws.com/scmlops/SageMakerProduct.yml'
 
 Resources:
   MasterPortfolio:
