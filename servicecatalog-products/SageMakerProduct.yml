@@ -11,7 +11,7 @@ Parameters:
     Type: String
     Default: mnist
     Description: 'Name of your team'
-    AllowedValues: ['forecasting', 'sentiment-analysis', 'mnist']
+    AllowedValues: ['forecasting', 'sentiment-analysis', 'mnist', 'regression']
 
 Mappings:
   AuthInfo:

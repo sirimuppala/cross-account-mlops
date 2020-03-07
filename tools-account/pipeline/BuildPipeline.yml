@@ -49,16 +49,6 @@ Resources:
           - ""
           - - "mlops-bia-data-model-"
             - !Ref "AWS::AccountId"
-            #- "-"
-            #- !Select
-             #- 0
-             #- !Split
-              #- "-"
-              #- !Select
-               # - 2
-                #- !Split
-                 # - "/"
-                  #- !Ref "AWS::StackId"
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties: 
@@ -240,8 +230,6 @@ Resources:
                 - !Ref StageAccountID
                 - ':role/SageMakerExecutionRole-'
                 - !Ref StageAccountID
-                  #'arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0'
-          #StageAccountS3Bucket: 'mlops-bia-data-sam-ab5c9af0'
           StageAccountS3Bucket:
             Fn::Join:
               - "-"
@@ -254,7 +242,6 @@ Resources:
                 - !Ref StageAccountID
                 - ':role/AllowAccessToToolsAccountRole-'
                 - !Ref StageAccountID
-                #'arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0'      -
           SSEKMSKeyIdIn: !Ref KMSMasterKeyID
       FunctionName: 
         Fn::Join:
@@ -262,7 +249,6 @@ Resources:
          - - "MLOps-BIA-DeployModel-"
            - !Ref UniqueID
       Code:
-        #S3Bucket: !Ref LambdaFunctionsBucket
         S3Bucket:
           Fn::Join:
             - "-"
@@ -279,7 +265,6 @@ Resources:
       Role: !GetAtt [LambdaExecutionRole, Arn]
       Environment: 
         Variables:
-          #SageMakerExecutionRole: !GetAtt [SageMakerRole, Arn]
           SSEKMSKeyIdIn: !Ref KMSMasterKeyID
           StageAccountAccessRole:
             Fn::Join:
@@ -288,8 +273,7 @@ Resources:
                 - !Ref StageAccountID
                 - ':role/AllowAccessToToolsAccountRole-'
                 - !Ref StageAccountID
-                #'arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0'
-      FunctionName: 
+      FunctionName:
         Fn::Join:
          - ""
          - - "MLOps-BIA-GetStatus-"
@@ -312,7 +296,6 @@ Resources:
       Role: !GetAtt [LambdaExecutionRole, Arn]
       Environment: 
         Variables:
-          #SageMakerExecutionRole: !GetAtt [SageMakerRole, Arn]
           SSEKMSKeyIdIn: !Ref KMSMasterKeyID
           S3DataModelBucket: !Ref S3DataModelBucket
           StageAccountAccessRole:
@@ -322,8 +305,7 @@ Resources:
                 - !Ref StageAccountID
                 - ':role/AllowAccessToToolsAccountRole-'
                 - !Ref StageAccountID
-                #'arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0'
-      FunctionName: 
+      FunctionName:
         Fn::Join:
          - ""
          - - "MLOps-BIA-EvaluateModel-"
@@ -362,7 +344,6 @@ Resources:
             Statement:
               - "Effect": "Allow"
                 "Action": "sts:AssumeRole"
-                #"Resource": "arn:aws:iam::756752983459:role/AllowAccessToToolsAccountRole-sam-ab5c9af0"
                 "Resource":
                   Fn::Join:
                     - ""
@@ -372,7 +353,6 @@ Resources:
                       - !Ref StageAccountID
               - "Effect": "Allow"
                 "Action": "iam:PassRole"
-                #"Resource": "arn:aws:iam::756752983459:role/SageMakerExecutionRole-sam-ab5c9af0"
                 "Resource":
                   Fn::Join:
                     - ""
@@ -455,16 +435,6 @@ Resources:
           - "-"
           - - "AllowAccessToDataScienceAccountRole"
             - !Ref "AWS::AccountId"
-            #- "-"
-            #- !Select
-             # - 0
-              #- !Split
-               # - "-"
-                #- !Select
-                 # - 2
-                  #- !Split
-                   # - "/"
-                    #- !Ref "AWS::StackId"
 
 Outputs:
       S3DataModelBucket:

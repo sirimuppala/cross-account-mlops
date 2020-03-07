@@ -31,33 +31,6 @@ def lambda_handler(event, context):
         endpointConfigSuffix = eventJson['endpointConfigSuffix']
         print("[INFO]endpointConfigName is:", endpointConfigSuffix)
 
-        # if stage == 'Training':
-        #   name = jobName
-        #    training_details = describe_training_job(name)
-        # status = training_details['TrainingJobStatus']
-        #  print('[INFO]Training job is:', status)
-        #    if status == 'Completed':
-        # need to call success
-        #    print('[SUCCESS]status is completed')
-        #     print(training_details)
-        #      s3_output_path = training_details['OutputDataConfig']['S3OutputPath']
-        #       model_data_url = os.path.join(s3_output_path, name, 'output/model.tar.gz')
-        #        event['message'] = 'Training job "{}" complete. Model data uploaded to "{}"'.format(name, model_data_url)
-        # event['model_data_url'] = model_data_url
-        #  write_job_info_s3(event, training_details)
-        #   put_job_success(event)
-        # elif status == 'Failed':
-        # need to call failure
-        # print('[ERROR]status is failed')
-        #  failure_reason = training_details['FailureReason']
-        #   event['message'] = 'Training job failed. {}'.format(failure_reason)
-        #    put_job_failure(event)
-        # elif status == 'InProgress':
-        # need to call continue
-        #      print('[INFO]status is still in process')
-        #       continue_job_later(event, 'Training job still in process.')
-        # el
-
         if stage == 'Deployment':
             jobName = previousStepEvent['endpoint']
             print("[INFO]Deployment endpoint name is:", jobName)
@@ -87,18 +60,6 @@ def lambda_handler(event, context):
         put_job_failure(event)
         return 'failed'
 
-
-# def describe_training_job(name):
-
-#   try:
-#      response = sagemaker.describe_training_job(
-#         TrainingJobName=name
-#    )
-#    except Exception as e:
-#       print(e)
-#      print('[ERROR]Unable to describe training job.')
-#     raise(e)
-# return response
 
 def describe_endpoint(endpointConfigSuffix, jobName):
     try:

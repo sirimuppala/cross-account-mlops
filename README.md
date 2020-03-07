@@ -9,25 +9,25 @@ Few terminologies to get familiar with before we get started with lab provisioni
 
 **Tools Account** - An AWS account managed by a centralized IT team, who are responsible for deploying the ML models to production through MLOps code pipeline.
 **Data Scientist Account** - An AWS account used by Data Scientists where they could deploy Sagemaker notebooks, run their models, and submit once approved.
-**Non-Production Account** - An AWS account where the code pipeline deploys and validates the models before deploying into a production account.
-**Production Account** - An AWS account where the production applications run. MLOps code pipeline auto-deploy the models.
+**Stage Account** - An AWS account where the code pipeline automatically deploys to and validates the ML models.
+**Production Account** - An AWS account where the production applications run. MLOps code pipeline from this lab can be extended to 
 
-**Note:** For this lab, we are combining the Non-Production Account and Production Account and call it as staging account. You expect to see a total of ***THREE aws accounts***.
+**Note:** For this lab, we are are only using Tools, DataScience and Stage accounts. The MLOps pipeline can however be extended to auto-deploy the models to Production environment.
 
-This lab will build the following architecture
+The figure below shows the architecture you will build using this lab.  
 
 ![ee-login](images/MLOps_CrossAccount_Architecture.jpg) 
 
 ## Steps Involved
 
 **Step-1:** Prepare the Lab environment 
-* Configure Service Catalog Product/Portfolio in the Tools Account and share it with a Spoke account.
-* Configure a Service Catalog Product/Portfolio and other networking resources in the Data Scientists account and allow access to Data Scientists user/role.
-* Configure Non-prod/ prod accounts [Steps]
-* Configure MLOps pipeline in the Tools Account [Steps]
+* Configure Service Catalog Product/Portfolio in the Tools Account and share it with a Spoke account (DataScience Account for this lab).
+* Configure a Service Catalog Product/Portfolio and other networking resources in the DataScience account and allow access to Data Scientists user/role.
+* Configure the stage accounts [Steps]
+* Configure MLOps Pipeline in the Tools Account [Steps]
 
 **Step-2:** Data scientists request for AWS resources 
-* Log in to the Data Scientists AWS account
+* Log in to the DataScience AWS account
 * Go to AWS Service Catalog and launch the Sagemaker Notebook instance
 * Use the Outputs from AWS Service Catalog and continue with remaining work.
 
@@ -35,7 +35,6 @@ This lab will build the following architecture
 * Steps to start a notebook
 * Steps to build/train the ML model
 * Steps to submit the Model to S3 bucket in Tools account
-
 
 ### Step-1 : Prepare the Lab environment
 
@@ -125,6 +124,9 @@ In this section, you will login in as a **Data Scientist** and launch a Secure S
 
 ### Step-3 : Data scientists build/train the ML models and submit the final Model.
 
+In this step, you will build an XGBoost model in the datascience account and once ready will transfer the model along with test data to IT Tools account.
+Open the "xgboost_abalone.ipynb", read the narration and exectue the cells.   
+
 #### Build/Train the models
 
 #### Submit the job on completion
@@ -134,6 +136,21 @@ In this section, you will login in as a **Data Scientist** and launch a Secure S
 
 ## Conclusion
 
+## Clean Up (Optional)
+
+* Stage Account
+    1. Empty the S3 bucket with name starting with "mlops-bia-data-" 
+    2. Delete the CloudFormation Stack with name "MLOpsResources"
+* DataScience Account
+    1. Empty the S3 bucket with name starting with "datascience-project" 
+    2. Delete the CloudFormation Stack with name "DSEnvironment" (Is this correct??)
+*  Tools Account
+    1. Empty the S3 bucket with name starting with "mlops-bia-data" 
+    2. Empty the S3 bucket with name stating with "mlops-bia-codepipeline-artifacts"
+    3. Empty the S3 bucket with name stating with "mlops-bia-lambda-code-"
+    4. Delete the CloudFormation Stack with name "MLOpsPipeline"
+    5.1 Wait till the MLOpsPipeline is deleted.
+    5.2 Delete the CloudFormation Stack with name "MLOpsPipelinePrep" 
 
 ---
 ### !!!!!! WorkLog : Will be removed later
@@ -143,12 +160,10 @@ In this section, you will login in as a **Data Scientist** and launch a Secure S
 * tools-account/lambda-code/MLOps-BIA-DeployModel.py.zip
 * tools-account/lambda-code/MLOps-BIA-GetStatus.py.zip
 * tools-account/lambda-code/MLOps-BIA-EvaluateModel.py.zip
-* tools-account/lambda-code/MLOps-BIA-TrainModel.py.zip
  
 2.4 Launch CloudFormation Stack
 
 aws cloudformation deploy --stack-name pre-reqs  --template-file ToolsAcct/pre-reqs.yaml --profile mlops-tools-user 
-
 
 3. Prepare the Data Science account.Datascience / Dev Account
 (Note : Resources below will be created by the ServiceCatalog in the workshop.  For
@@ -158,9 +173,3 @@ now using a cloudformation template)
 S3 bucket; Name - datascience; folders - data, models/development, models/release
 
 SageMaker notebook
-
-3.2 
-3.3 Upload the python code.
-3.4 Copy over the model (and data?? from datascience account??)
-
-
