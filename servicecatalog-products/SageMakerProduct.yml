@@ -4,9 +4,9 @@ Description: Stack for complete deployment of DataScientist Sandboxes
 Parameters:
   SagemakerInstance: 
     Type: String
-    Default: S
+    Default: Small
     Description: 'Instance type for Sagemaker Notebook.'
-    AllowedValues: ['S','M','L']
+    AllowedValues: ['Small','Medium','Large']
     # AllowedValues: ['ml.t2.large','ml.t2.xlarge','ml.t2.2xlarge']
   TeamName: 
     Type: String
@@ -19,12 +19,12 @@ Mappings:
     GenKey:
       value: 'true'
   InstanceSize:
-    S:
-      size: 'ml.t2.large'
-    M:
-      size: 'ml.t2.xlarge'
-    L:
-      size: 'ml.t2.2xlarge'
+    Small:
+      size: 'ml.t3.medium'
+    Medium:
+      size: 'ml.t3.large'
+    Large:
+      size: 'ml.t3.xlarge'
   ServiceInfo:
     StackName: 
       value: 'DataScientist-infrastructure'
@@ -168,29 +168,41 @@ Resources:
   KMSKeyId:
     Type: AWS::KMS::Key
     Properties:
+      Description: KMS Key for sagemaker Notebook's EBS encryption
+      EnableKeyRotation: true
+      Enabled: true
       KeyPolicy:
-        Version: 2012-10-17
         Id: key-default-1
         Statement:
-          -
-            Sid: "Enable IAM User Permissions"
-            Effect: "Allow"
-            Principal:
-              AWS: !Join ['', ['arn:aws:iam::', !Ref 'AWS::AccountId', ':root'] ]
-            Action: "kms:*"
-            Resource: "*"
-          -
-            Sid: "Allow use of the key"
-            Effect: "Allow"
-            Principal:
-              AWS: !GetAtt SageMakerExecutionRole.Arn
-            Action:
-              - "kms:Encrypt"
-              - "kms:Decrypt"
-              - "kms:ReEncrypt*"
-              - "kms:GenerateDataKey*"
-              - "kms:DescribeKey"
-            Resource: "*"
+        - Action:
+          - kms:DeleteAlias
+          - kms:DescribeKey
+          - kms:EnableKey
+          - kms:GetKeyPolicy
+          - kms:UpdateAlias
+          - kms:CreateAlias
+          - kms:GetKeyPolicy
+          - kms:CreateGrant
+          - kms:DisableKey
+          - kms:Revoke*
+          - kms:Disable*
+          - kms:CancelKeyDeletion
+          - kms:ScheduleKeyDeletion
+          - kms:PutKeyPolicy
+          - kms:RevokeGrant
+          - kms:TagResource
+          - kms:UnTagResource
+          - kms:EnableKeyRotation
+          - kms:ListResourceTags
+          Effect: Allow
+          Principal:
+            AWS:
+            - !Join ['', [ 'arn:aws:iam::', !Ref 'AWS::AccountId', ':root']]
+            - '{{resolve:ssm:SCSMLaunchRoleArn:1}}'
+          Resource:
+          - '*'
+        Version: '2012-10-17'
+
   KMSKeyIdAlias:
     Type: AWS::KMS::Alias
     DependsOn: KMSKeyId

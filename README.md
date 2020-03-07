@@ -46,12 +46,13 @@ https://console.aws.amazon.com/cloudformation#/stacks/new?stackName=LabSCToolsAc
 6. Scroll down **Review LabSCToolsAccountSetup** page to review the selections and choose **Create stack**
 7. Wait for the stack to deploy resource completely.
 8. Choose **Outputs** section and note down the values of **MasterPortfolioId** and **SagemakerProductID**. You will use this information in next step.
-![HowToVideo](ToolsAccount_Outputs.png)
+![Outputs Screenshot](servicecatalog-products/ToolsAccount_Outputs.png)
 9. Go to [Service Catalog Console](https://console.aws.amazon.com/servicecatalog/) and choose **Portfolios** and **Data Scientists - Sample Portfolio**
 10. Choose **Share(1)** to list the accounts the portfolio is shared with. In this case it will be the *SpokeAccountID* that you provided as input parameter.
 
 ##### Configuration on Data Scientists Account
 11. Log in to your assgined **Data Scientists Account** using the *Lab Administrator* credentails provided.
+**PLEASE READ:** Service Catalog is a regional service. Please make sure you are in the same region where you shared the portfolio from in above section.
 12. Copy and paste the below link in your web browser
 https://console.aws.amazon.com/cloudformation#/stacks/new?stackName=LabDSAccountSCSetup&templateURL=https://marketplace-sa-resources.s3.amazonaws.com/scmlops/prepare_datascientist_account.yaml
 13. In **Create stack** page, choose **Next**

@@ -16,12 +16,12 @@ Parameters:
     Description: >-
       SC Portfolio Id from the master account. Can be obtained from output of the tools account stack.
     Type: String
-    Default: port-fillmeinpleas
+    Default: port-FILLMEINFIRST
   SagemakerProductID:
     Description: >-
       Sagemaker product ID on the master account. Can be obtained from output of the tools account stack.
     Type: String
-    Default: prod-fillmeinpleas
+    Default: prod-FILLMEINALSO
 
 Resources:
   AcceptedPortfolioShare:
@@ -30,11 +30,11 @@ Resources:
       AcceptLanguage: en
       PortfolioId: !Ref MasterPortfolioId
 
-  AdministratorPortfolio:
+  SpokePortfolio:
     Type: 'AWS::ServiceCatalog::Portfolio'
     Properties:
       AcceptLanguage: en
-      Description: This portfolio enables data scientists to ddeploy their services
+      Description: This portfolio enables data scientists to deploy their services
       DisplayName: Spoke Data Scientists Portfolio
       ProviderName: CCOE
   
@@ -43,7 +43,7 @@ Resources:
     DependsOn: AcceptedPortfolioShare
     Properties:
       AcceptLanguage: en
-      PortfolioId: !Ref AdministratorPortfolio
+      PortfolioId: !Ref SpokePortfolio
       ProductId: !Ref SagemakerProductID
       SourcePortfolioId: !Ref MasterPortfolioId
 
@@ -56,7 +56,7 @@ Resources:
   CostCenterAdminPortfolioTagOptionOneAssociation:
     Type: 'AWS::ServiceCatalog::TagOptionAssociation'
     Properties:
-      ResourceId: !Ref AdministratorPortfolio
+      ResourceId: !Ref SpokePortfolio
       TagOptionId: !Ref CostCenterTagOptionOne
 
   CostCenterTagOptionTwo:
@@ -68,20 +68,20 @@ Resources:
   CostCenterAdminPortfolioTagOptionTwoAssociation:
     Type: 'AWS::ServiceCatalog::TagOptionAssociation'
     Properties:
-      ResourceId: !Ref AdministratorPortfolio
+      ResourceId: !Ref SpokePortfolio
       TagOptionId: !Ref CostCenterTagOptionTwo
 
   SageMakerProductLaunchConstraint:
     Type: 'AWS::ServiceCatalog::LaunchRoleConstraint'
     DependsOn:
-      - AdministratorPortfolio
+      - SpokePortfolio
       - SagemakerProductLaunchRole
     Properties:
       AcceptLanguage: en
       Description: >-
         This launch constraint ensures that analysts can launch Secure Sagemaker notebook
         without minimum permissions
-      PortfolioId: !Ref AdministratorPortfolio
+      PortfolioId: !Ref SpokePortfolio
       ProductId: !Ref SagemakerProductID
       RoleArn: !GetAtt
         - SagemakerProductLaunchRole
@@ -129,13 +129,24 @@ Resources:
                   - "iam:CreateRole"
                   - "iam:DetachRolePolicy"
                   - "iam:AttachRolePolicy"   
-                  - "kms:DescribeKey"
-                  - "kms:GetKeyPolicy"
-                  - "kms:GetKeyRotationStatus"
-                  - "kms:GetPublicKey"
-                  - "kms:ListKeys"
-                  - "kms:ListAliases"
-                  - "kms:ListKeyPolicies"                            
+                  - "iam:PutRolePolicy"
+                  - "iam:DeleteRolePolicy"
+                  - "iam:getRolePolicy"
+                  - "iam:ListRoleTags"
+                  - "iam:ListUserTags"
+                  - "kms:CreateGrant"
+                  - "kms:CreateKey"
+                  - "kms:DeleteAlias"
+                  - "kms:CreateAlias"
+                  - "kms:DeleteCustomKeyStore"
+                  - "kms:DeleteImportedKeyMaterial"
+                  - "kms:EnableKey"
+                  - "kms:EnableKeyRotation"
+                  - "kms:PutKeyPolicy"
+                  - "kms:ScheduleKeyDeletion"
+                  - "kms:UpdateAlias"
+                  - "kms:UpdateCustomKeyStore"
+                  - "kms:UpdateKeyDescription"
                   - "cloudformation:DescribeStackResource"
                   - "cloudformation:DescribeStackResources"
                   - "cloudformation:GetTemplate"
@@ -153,6 +164,114 @@ Resources:
                   - "s3:GetObject"
                 Resource: '*'
 
+  SCSMLaunchRoleArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: SC Sagemaker Launch Constraint Role Arn
+      Name: SCSMLaunchRoleArn
+      Type: String
+      Value:
+        Fn::GetAtt:
+        - SagemakerProductLaunchRole
+        - Arn
+
+  DataScientistRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: DataScientist
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            AWS:
+              Fn::Sub:
+              - arn:aws:iam::${accountid}:root
+              - accountid:
+                  Ref: AWS::AccountId
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AWSServiceCatalogEndUserFullAccess
+      - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+      Policies:
+        - PolicyName: SageMakerAccessInlinePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              Action:
+                - sagemaker:CreateModel
+                - sagemaker:DescribeTrainingJob
+                - sagemaker:DescribeLabelingJob
+                - sagemaker:DescribeModelPackage
+                - sagemaker:ListTransformJobs
+                - sagemaker:Search
+                - sagemaker:ListTrainingJobs
+                - sagemaker:DescribeAlgorithm
+                - sagemaker:UpdateEndpointWeightsAndCapacities
+                - sagemaker:UpdateCodeRepository
+                - sagemaker:DescribeTransformJob
+                - sagemaker:ListSubscribedWorkteams
+                - sagemaker:ListLabelingJobsForWorkteam
+                - sagemaker:CreateEndpoint
+                - sagemaker:ListAlgorithms
+                - sagemaker:CreateModelPackage
+                - sagemaker:ListNotebookInstanceLifecycleConfigs
+                - sagemaker:DeleteModel
+                - sagemaker:DescribeSubscribedWorkteam
+                - sagemaker:ListCompilationJobs
+                - sagemaker:DescribeHyperParameterTuningJob
+                - sagemaker:ListEndpointConfigs
+                - sagemaker:CreateEndpointConfig
+                - sagemaker:ListTrainingJobsForHyperParameterTuningJob
+                - sagemaker:DescribeEndpointConfig
+                - sagemaker:StopNotebookInstance
+                - sagemaker:RenderUiTemplate
+                - sagemaker:StopTransformJob
+                - sagemaker:ListWorkteams
+                - sagemaker:DescribeNotebookInstance
+                - sagemaker:CreateAlgorithm
+                - sagemaker:CreateTrainingJob
+                - sagemaker:DescribeNotebookInstanceLifecycleConfig
+                - sagemaker:StopHyperParameterTuningJob
+                - sagemaker:DeleteCodeRepository
+                - sagemaker:DeleteEndpoint
+                - sagemaker:DescribeEndpoint
+                - sagemaker:CreateTransformJob
+                - sagemaker:ListNotebookInstances
+                - sagemaker:InvokeEndpoint
+                - sagemaker:ListTags
+                - sagemaker:CreateCodeRepository
+                - sagemaker:DescribeModel
+                - sagemaker:StopTrainingJob
+                - sagemaker:ListHyperParameterTuningJobs
+                - sagemaker:ListModelPackages
+                - sagemaker:DescribeWorkteam
+                - sagemaker:UpdateEndpoint
+                - sagemaker:ListLabelingJobs
+                - sagemaker:DescribeCompilationJob
+                - sagemaker:GetSearchSuggestions
+                - sagemaker:CreatePresignedNotebookInstanceUrl
+                - sagemaker:StartNotebookInstance
+                - sagemaker:ListModels
+                - sagemaker:DescribeCodeRepository
+                - sagemaker:ListEndpoints
+                - sagemaker:ListCodeRepositories
+              Effect: Allow
+              Resource: '*'
+              Sid: VisualEditor0
+
+  PortfolioPrincipleAssociation:
+    Type: AWS::ServiceCatalog::PortfolioPrincipalAssociation
+    Properties:
+      PortfolioId:
+        Ref: SpokePortfolio
+      PrincipalARN:
+        Fn::GetAtt:
+        - DataScientistRole
+        - Arn
+      PrincipalType: IAM
+    
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -280,3 +399,4 @@ Resources:
       Name: supercoolers-vpc
       Type: String
       Value: !Ref VPC
+

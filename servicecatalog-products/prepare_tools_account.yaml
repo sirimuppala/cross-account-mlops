@@ -64,3 +64,4 @@ Outputs:
     Value: !Ref MasterPortfolio
   SagemakerProductID:
     Value: !Ref SagemakerProduct
+    Description: Sagemaker in Service Catalog Product Id
