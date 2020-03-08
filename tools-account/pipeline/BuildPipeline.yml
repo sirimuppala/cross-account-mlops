@@ -1,14 +1,14 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Build MLOps Pipeline
 Parameters: 
-  UniqueID: 
+  UniqueID:
     Type: String
     Default: yourinitials
-    Description: Enter your initials in lower case as a unique identifier for components created 
+    Description: Enter your initials in lower case as a unique identifier for components created (atleast 3 characters)
     AllowedPattern: "^([a-z]|(d(?!d{0,2}.d{1,3}.d{1,3}.d{1,3})))([a-zd]|(.(?!(.|-)))|(-(?!.))){1,61}[a-zd.]$"
   LambdaFunctionsBucket:
     Type: String
-    Default: mlops-bia-lambda-code
+    Default: mlops-bia-lambda-functions
     Description: S3 Bucket containing your Lambda Functions (Should match the bucket created by the PrepPipeline stack
   DataScienceAccountID:
     Type: String

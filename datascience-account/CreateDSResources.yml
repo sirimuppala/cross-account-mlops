@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Initialize the data science environment.
+
+Resources:
+
+  DatascienceS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      AccessControl: BucketOwnerFullControl
+      VersioningConfiguration: 
+        Status: Enabled
+      BucketName:
+        Fn::Join:
+          - ""
+          - - "datascience-project-"
+            - !Ref "AWS::AccountId"
+
+Outputs:
+      DataScienceS3Bucket:
+        Description: S3 bucket for datascience project
+        Value: !Ref DatascienceS3Bucket
