@@ -65,3 +65,6 @@ Outputs:
   SagemakerProductID:
     Value: !Ref SagemakerProduct
     Description: Sagemaker in Service Catalog Product Id
+  ToolsAccountID:
+    Description: Your Tools Account Id. AKA, AWS account where your SC masterportfolio reside
+    Value: !Ref AWS::AccountId

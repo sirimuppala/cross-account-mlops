@@ -3,13 +3,13 @@ Description: Sample spoke setup CloudFormation Template.(fdp-1oh0t5bfi)
 Mappings:
   NetworkInfo:
     VPC:
-      CIDR: '10.50.0.0/16'
+      CIDR: '10.60.0.0/16'
     Subnet1:
-      CIDR: '10.50.1.0/24'
+      CIDR: '10.60.1.0/24'
     Subnet2:
-      CIDR: '10.50.2.64/24'
+      CIDR: '10.60.2.64/24'
     Subnet3:
-      CIDR: '10.50.3.64/24'
+      CIDR: '10.60.3.64/24'
 
 Parameters:
   MasterPortfolioId:
@@ -22,6 +22,11 @@ Parameters:
       Sagemaker product ID on the master account (prod-123456789012).
     Type: String
     AllowedPattern: 'prod-[A-Za-z0-9-]{13}'
+  ToolsAccountID:
+    Description: Tools AccountId from where the portfolio is shared
+    Type: String
+    AllowedPattern: '^[0-9]{12}$'
+    ConstraintDescription: Must be a 12-digit number
 
 Resources:
   AcceptedPortfolioShare:
@@ -399,6 +404,14 @@ Resources:
       Name: mnist-vpc
       Type: String
       Value: !Ref VPC
+
+  ToolsAccount:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: ToolsAccount number
+      Name: ToolsAccountID
+      Type: String
+      Value: !Ref ToolsAccountID
 
 Outputs:
   SwitchRoleLink:

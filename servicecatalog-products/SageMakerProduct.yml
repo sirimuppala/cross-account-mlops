@@ -135,19 +135,20 @@ Resources:
                 - !Sub "arn:aws:sagemaker:${AWS::Region}:${AWS::AccountId}:notebook-instance/${AWS::StackName}*"
                 - !Sub "arn:aws:sagemaker:${AWS::Region}:${AWS::AccountId}:notebook-instance-lifecycle-config/basic*"
         - PolicyName: SageMakerTrainDeployPermissions
-          Version: '2012-10-17',
-          Statement:
-            Action:
-              - "sagemaker:CreateTrainingJob"
-              - "sagemaker:DescribeTrainingJob"
-              - "sagemaker:CreateModel"
-              - "sagemaker:CreateEndpoint"
-              - "sagemaker:CreateEndpointConfig"
-              - "sagemaker:DescribeEndpoint"
-              - "sagemaker:InvokeEndpoint"
-            Resource: '*'
-            Effect: "Allow"
-            Sid: SageMakerTrainDeploy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              Action:
+                - "sagemaker:CreateTrainingJob"
+                - "sagemaker:DescribeTrainingJob"
+                - "sagemaker:CreateModel"
+                - "sagemaker:CreateEndpoint"
+                - "sagemaker:CreateEndpointConfig"
+                - "sagemaker:DescribeEndpoint"
+                - "sagemaker:InvokeEndpoint"
+              Resource: '*'
+              Effect: "Allow"
+              Sid: SageMakerTrainDeploy
         - PolicyName: CustomS3ListAccess
           PolicyDocument:
             Version: '2012-10-17'
@@ -178,21 +179,24 @@ Resources:
               Condition:
                 StringNotEquals:
                   s3:authType: REST-HEADER
-        ##TO FIX :  Need cross account access to copy models and data to the master (Tools) account.  The
-        ##Account ID below should be the Tools Account.
         - PolicyName: crossaccountaccess
-            PolicyDocument:
-              Version: 2012-10-17
-              Statement:
-                - Effect: Allow
-                  Action: sts:AssumeRole
-                  Resource:
-                    Fn::Join:
-                      - ""
-                      - - 'arn:aws:iam::'
-                        - !Ref AWS::AccountId
-                        - ':role/AllowAccessToDataScienceAccountRole-'
-                        - !Ref AWS::AccountId
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              Effect: Allow
+              Action: sts:AssumeRole
+              Resource: !Join ['', ['arn:aws:iam::', '{{resolve:ssm:', 'ToolsAccountID', ':1}}', ':role/AllowAccessToDataScienceAccountRole-', '{{resolve:ssm:', 'ToolsAccountID', ':1}}' ]]
+        - PolicyName: CustomSSMPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              Effect: Allow
+              Action:
+                - ssm:GetParameter
+                - ssm:GetParameterHistory
+                - ssm:GetParameters
+              Resource: !Join [':', ['arn:aws:ssm', !Ref 'AWS::Region', !Ref 'AWS::AccountId', 'parameter/ToolsAccountID' ]]
+
   KMSKeyId:
     Type: AWS::KMS::Key
     Properties:
@@ -247,8 +251,9 @@ Resources:
               set -e
               ##TO FIX :  Need cross account access to copy models and data to the master (Tools) account.  The
               ##Account ID below should be the Tools Account.
-              echo "export tools_bucket_name=mlops-bia-data-model-${AWS::AccountId}" >> /etc/profile.d/jupyter-env.sh
-              echo "export tools_account_access_role_arn=arn:aws:iam::${AWS::AccountId}:role/AllowAccessToDataScienceAccountRole-${AWS::AccountId}" >> /etc/profile.d/jupyter-env.sh
+              TOOLACCOUNTID=$(aws ssm get-parameter --name ToolsAccountID --query 'Parameter.Value' --output text)
+              echo "export tools_bucket_name=mlops-bia-data-model-$TOOLACCOUNTID " >> /etc/profile.d/jupyter-env.sh
+              echo "export tools_account_access_role_arn=arn:aws:iam::$TOOLACCOUNTID:role/AllowAccessToDataScienceAccountRole-$TOOLACCOUNTID" >> /etc/profile.d/jupyter-env.sh
               initctl restart jupyter-server
 
               sudo -i -u ec2-user bash << EOF

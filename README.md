@@ -49,12 +49,17 @@ Make a note the AWS Account IDs for the Tools, Datascience and Stage accounts pr
 
 #### Clone or download this git repo
 1. Clone or download the zip file of this repo.
+```
+git clone https://github.com/sirimuppala/cross-account-mlops.git
+```
 2. If you downloaded the zip, unzip the file.
 
 #### Configure  Tools Account
-1.1. Log in to your assigned **Tools Account** using the  credentials provided by your lab administrator.
+##### 1.1 Log in  to your Tools Account
 
-1.2  Setup ServiceCatalog
+1.1.1 Log in to your assigned **Tools Account** using the  credentials provided by your lab administrator.
+
+##### 1.2  Setup ServiceCatalog
 
 1.2.1 Copy and paste the below link in your web browser of your Tools Account
 https://us-east-2.console.aws.amazon.com/cloudformation#/stacks/new?stackName=LabSCToolsAccountSetup&templateURL=https://marketplace-sa-resources.s3.amazonaws.com/scmlops/prepare_tools_account.yaml
@@ -64,19 +69,19 @@ https://us-east-2.console.aws.amazon.com/cloudformation#/stacks/new?stackName=La
 * c. In **Configure stack options** page, leave the defaults and choose **Next**
 * d. Scroll down **Review LabSCToolsAccountSetup** page to review the selections and choose **Create stack**
 * e. Wait for the stack to deploy resource completely.
-* f. Choose **Outputs** section and note down the values of **MasterPortfolioId** and **SagemakerProductID**. You will use this information in next step.
+* f. Choose **Outputs** section and note down the values of `MasterPortfolioId`,  `SagemakerProductID`, and `ToolsAccountID` . You will use this information in the next step.
 ![Outputs Screenshot](images/ToolsAccount_Outputs.png)
 
 1.2.2 Go to Service Catalog Console - https://us-east-2.console.aws.amazon.com/servicecatalog/ and choose **Portfolios** and **Data Scientists - Sample Portfolio**
 
-1.2.3 Choose Actions --> **Share(1)** to list the accounts the portfolio is shared with. Enter the *SpokeAccountID* that you provided as input parameter.
+1.2.3 Choose **Actions** --> **Share(1)** to list the accounts the portfolio is shared with. PS: No action needed, just verify the portfolio is shared with *SpokeAccountID*.
 
-1.3  Setup MLOps Pipeline
+##### 1.3  Setup MLOps Pipeline
 
 1.3.1 Create a CloudFormation stack to prepare deploy lambda functions to be used by MLOps pipeline
 
-* a. In **Create stack** page, choose "Upload a template file", Choose file : tools-account/pipeline/PrepPipeline.yml; Click **Next**
-* b. In **Specify stack details** page, type in "MLOpsPipelinePrep" for Stack Name.
+* a. In **Create stack** page, choose **Upload a template file**, Choose file : `tools-account/pipeline/PrepPipeline.yml`; Click **Next**
+* b. In **Specify stack details** page, type in `MLOpsPipelinePrep` for Stack Name.
 * c. In **Configure stack options** page, leave the defaults and choose **Next**
 * d. Scroll down **Review** page to review the selections and choose **Create stack**
 
@@ -86,8 +91,8 @@ https://us-east-2.console.aws.amazon.com/cloudformation#/stacks/new?stackName=La
 * c. Upload tools-account/lambda-code/MLOps-BIA-EvaluateModel.py.zip
 
 1.3.3 Create a CloudFormation stack to setup the MLOps Code Pipeline
-* a. In **Create stack** page, choose "Upload a template file", Choose file : tools-account/pipeline/BuildPipeline.yml; Click **Next**
-* b. In **Specify stack details** page, type in "MLOpsPipeline" for Stack Name.
+* a. In **Create stack** page, choose **Upload a template file**, Choose file : `tools-account/pipeline/BuildPipeline.yml`; Click **Next**
+* b. In **Specify stack details** page, type in `MLOpsPipeline` for Stack Name.
 * c. In **Configure stack options** page, type in 'DataScienceAccountID', 'StageAccountID', an UniqueID  and click **Next**
 * d. Scroll down **Review** page to review the selections, select checkbox to give permissions to create IAM resources and click  **Create stack**
  
@@ -103,7 +108,7 @@ https://us-east-2.console.aws.amazon.com/cloudformation#/stacks/new?stackName=La
 https://us-east-2.console.aws.amazon.com/cloudformation#/stacks/new?stackName=LabDSAccountSCSetup&templateURL=https://marketplace-sa-resources.s3.amazonaws.com/scmlops/prepare_datascientist_account.yaml
 
 * a. In **Create stack** page, choose **Next**
-* b. Enter the **MasterPortfolioId** and **SagemakerProductID** you noted in Step 1.2.1(f) and choose **Next**.
+* b. Enter the **MasterPortfolioId**, **SagemakerProductID** and **ToolsAccountID** you noted in Step 1.2.1(f) and choose **Next**.
 * c. In **Configure stack options** page, leave the defaults and choose **Next**
 * d. Scroll down **Review LabDSAccountSCSetup** page and select **I acknowledge that AWS CloudFormation might create IAM resources** option and choose **Create stack**
 * f. Check in the **Outputs** tab, and note down the **SwitchRoleLink** role. You will use the URL link value to switch role as DataScientist in Step-2 below.
@@ -174,9 +179,8 @@ Open the "xgboost_abalone.ipynb", read the narration and execute the cells.
 #### Walkthrough  of the Codepipeline
 
 
-
-
 ## Conclusion
+
 
 ## Clean Up (Optional)
 
@@ -194,18 +198,4 @@ Open the "xgboost_abalone.ipynb", read the narration and execute the cells.
     5.1 Wait till the MLOpsPipeline is deleted.
     5.2 Delete the CloudFormation Stack with name "MLOpsPipelinePrep" 
 
----
-### !!!!!! WorkLog : Will be removed later
 
-2.4 Launch CloudFormation Stack
-
-aws cloudformation deploy --stack-name pre-reqs  --template-file ToolsAcct/pre-reqs.yaml --profile mlops-tools-user 
-
-3. Prepare the Data Science account.Datascience / Dev Account
-(Note : Resources below will be created by the ServiceCatalog in the workshop.  For
-now using a cloudformation template)
-
-3.1 Launch the cloudformation template to launch these resources
-S3 bucket; Name - datascience; folders - data, models/development, models/release
-
-SageMaker notebook
