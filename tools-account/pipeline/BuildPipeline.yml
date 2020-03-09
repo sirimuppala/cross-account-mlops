@@ -95,7 +95,7 @@ Resources:
                     - ""
                     - - "MLOps-BIA-DeployModel-"
                       - !Ref UniqueID
-                UserParameters: '{ "InitialInstanceCount": 1, "InitialVariantWeight": 1, "InstanceType": "ml.t2.medium", "EndpointConfigName": "Tools" }'
+                UserParameters: '{ "InitialInstanceCount": 1, "InitialVariantWeight": 1, "InstanceType": "ml.t2.medium", "EndpointConfigName": "Tools" , "TrainingImage": "825641698319.dkr.ecr.us-east-2.amazonaws.com/xgboost:1"}'
               RunOrder: 1
             - 
               Name: GetDeployStatus
@@ -155,7 +155,7 @@ Resources:
                     - ""
                     - - "MLOps-BIA-DeployModel-"
                       - !Ref UniqueID
-                UserParameters: '{ "InitialInstanceCount": 1, "InitialVariantWeight": 1, "InstanceType": "ml.t2.medium", "EndpointConfigName": "Stage" }'
+                UserParameters: '{ "InitialInstanceCount": 1, "InitialVariantWeight": 1, "InstanceType": "ml.t2.medium", "EndpointConfigName": "Stage", "TrainingImage": "825641698319.dkr.ecr.us-east-2.amazonaws.com/xgboost:1"}'
               RunOrder: 1
             -
               Name: GetStageDeployStatus
@@ -243,7 +243,8 @@ Resources:
                 - ':role/AllowAccessToToolsAccountRole-'
                 - !Ref StageAccountID
           SSEKMSKeyIdIn: !Ref KMSMasterKeyID
-      FunctionName: 
+          TrainingImage: "825641698319.dkr.ecr.us-east-2.amazonaws.com/xgboost:1"
+      FunctionName:
         Fn::Join:
          - ""
          - - "MLOps-BIA-DeployModel-"
@@ -360,6 +361,16 @@ Resources:
                       - !Ref StageAccountID
                       - ':role/SageMakerExecutionRole-'
                       - !Ref StageAccountID
+              - "Effect": "Allow"
+                "Action": "sts:AssumeRole"
+                "Resource":
+                  Fn::Join:
+                    - ""
+                    - - 'arn:aws:iam::'
+                      - !Ref StageAccountID
+                      - ':role/SageMakerExecutionRole-'
+                      - !Ref StageAccountID
+
       RoleName:
        Fn::Join:
           - ""

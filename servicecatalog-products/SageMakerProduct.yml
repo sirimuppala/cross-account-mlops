@@ -11,7 +11,7 @@ Parameters:
     Type: String
     Default: mnist
     Description: 'Name of your team'
-    AllowedValues: ['forecasting', 'sentiment-analysis', 'mnist', 'regression']
+    AllowedValues: ['forecasting', 'sentiment-analysis', 'mnist']
 
 Mappings:
   AuthInfo:
@@ -260,11 +260,10 @@ Resources:
               echo "Setup the Workshop exercises"
 
               pwd
-              #Will update once our repo is public
-              git clone https://github.com/aws-samples/amazon-sagemaker-devops-with-ml.git
+              git clone https://github.com/sirimuppala/cross-account-mlops.git
               pwd
               ls -la
-              cp -R /home/ec2-user/amazon-sagemaker-devops-with-ml/1-Built-In-Algorithm/* /home/ec2-user/SageMaker/
+              cp -R /home/ec2-user/cross-account-mlops/datascience-account/xgboost_abalone.ipynb /home/ec2-user/SageMaker/
 
       OnStart:
         - Content:

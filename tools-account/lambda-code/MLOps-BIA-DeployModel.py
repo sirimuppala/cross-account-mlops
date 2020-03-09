@@ -41,8 +41,7 @@ def lambda_handler(event, context):
         initial_variant_weight = config_param['InitialVariantWeight']
         print('[INFO]INITIAL_VARIANT_WEIGHT:', initial_variant_weight)
 
-        ##TODO : This should come from parameters
-        trainingImage = "433757028032.dkr.ecr.us-west-2.amazonaws.com/xgboost:1"
+        trainingImage = config_param["TrainingImage"]
 
         modelArtifact = 'https://{}.s3-{}.amazonaws.com/{}'.format(bucketname, region, objectKey)
         print("Model artifact is ", modelArtifact)
