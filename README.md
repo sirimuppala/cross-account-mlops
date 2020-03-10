@@ -79,7 +79,7 @@ https://us-east-2.console.aws.amazon.com/cloudformation#/stacks/new?stackName=La
 1.2.2 Go to Service Catalog Console - https://us-east-2.console.aws.amazon.com/servicecatalog/
 
 * Choose **Portfolios** and **Data Scientists - Sample Portfolio**
-* Choose **Actions** --> **Share(1)** to list the accounts the portfolio is shared with. PS: No action needed, just verify the portfolio is shared with *SpokeAccountID*.  
+* Choose **Share(1)** to list the accounts the portfolio is shared with. PS: No action needed, just verify the portfolio is shared with *SpokeAccountID*.  
 
 ##### 1.3  Setup MLOps Pipeline
 
