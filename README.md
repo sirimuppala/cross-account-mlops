@@ -194,11 +194,6 @@ In the last cell of "xgboost_abalone.ipynb" you transfer the ML model along with
 While this pipeline is limited to deploying and validating the model in two accounts, this can be extended to more accounts / envrionments, for eg., performance, non-prod and production.
 
 
-## Conclusion
-
-TODO
-
-
 ## Clean Up (Optional)
 Once you are done with the lab, delete the resources created to avoid unnecessary costs.  Please delete the resources in the order specified.
 
