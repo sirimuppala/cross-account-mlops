@@ -1,12 +1,6 @@
 # Enable self service capability for data scientists and integrate with automated MLOps.
 End to end machine learning using multiple AWS accounts across multiple environments.
 
-
-## Overview
-[ABSTRACT]
-
-TODO
-
 ## Terminology
 
 Few terms to get familiar with before we get started with lab provisioning:
