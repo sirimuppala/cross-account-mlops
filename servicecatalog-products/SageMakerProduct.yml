@@ -92,7 +92,8 @@ Resources:
               Effect: Allow
               Action:
                 - cloudwatch:PutMetricData
-                - cloudwatch:GetMetricStatistics
+                - iam:GetRole
+                - iam:GetRolePolicy
               Resource: '*'
         - PolicyName: log_roles_policy
           PolicyDocument:
